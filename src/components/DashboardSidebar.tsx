@@ -2,9 +2,10 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Zap, Mail, Globe, FileSearch, ClipboardList, Settings, Shield,
+  LayoutDashboard, Zap, Mail, Globe, FileSearch, ClipboardList, Settings,
   ChevronLeft, ChevronRight, Eye, Server
 } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -29,10 +30,8 @@ const DashboardSidebar = () => {
       className="hidden md:flex flex-col h-screen sticky top-0 bg-[hsl(var(--sidebar-background))] border-r border-border"
     >
       <div className="h-16 flex items-center gap-2.5 px-4 border-b border-border">
-        <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center flex-shrink-0">
-          <Shield className="w-4 h-4 text-primary-foreground" />
-        </div>
-        {!collapsed && <span className="font-bold text-sm">Phish<span className="text-gradient">Sleuth</span></span>}
+        <img src={logo} alt="Phishing D&P" className="w-8 h-8 object-contain flex-shrink-0" />
+        {!collapsed && <span className="font-bold text-sm">Phishing <span className="text-gradient">D&P</span></span>}
       </div>
 
       <nav className="flex-1 py-4 px-2 space-y-0.5 overflow-y-auto">

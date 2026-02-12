@@ -1,11 +1,12 @@
-import { Shield, Bell, ChevronDown, Activity } from "lucide-react";
+import { Bell, ChevronDown, Activity } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const DashboardTopBar = () => (
   <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card/30 backdrop-blur-md">
     <div className="flex items-center gap-4">
       <div className="md:hidden flex items-center gap-2">
-        <Shield className="w-5 h-5 text-primary" />
-        <span className="font-bold text-sm">Phish<span className="text-gradient">Sleuth</span></span>
+        <img src={logo} alt="Phishing D&P" className="w-6 h-6 object-contain" />
+        <span className="font-bold text-sm">Phishing <span className="text-gradient">D&P</span></span>
       </div>
       <div className="hidden md:flex items-center gap-3 text-sm text-muted-foreground">
         <Activity className="w-4 h-4 text-success animate-pulse" />
