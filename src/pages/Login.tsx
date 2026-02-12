@@ -3,18 +3,15 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
-  Eye, EyeOff, Shield, Mail, Lock, ArrowRight, ArrowLeft, User, Building2
+  Eye, EyeOff, Shield, Mail, Lock, ArrowRight, ArrowLeft
 } from "lucide-react";
 import logo from "@/assets/logo_obsidian_root.svg";
-
-type AccountType = "user" | "enterprise";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [accountType, setAccountType] = useState<AccountType>("user");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const navigate = useNavigate();
 
@@ -34,9 +31,10 @@ const Login = () => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      localStorage.setItem("accountType", accountType);
-      toast.success("Signed in successfully", { description: `Redirecting to ${accountType === "enterprise" ? "enterprise" : ""} dashboard...` });
-      navigate(accountType === "enterprise" ? "/enterprise" : "/dashboard");
+      const storedType = localStorage.getItem("accountType");
+      const isEnterprise = storedType === "enterprise";
+      toast.success("Signed in successfully", { description: `Redirecting to ${isEnterprise ? "enterprise " : ""}dashboard...` });
+      navigate(isEnterprise ? "/enterprise" : "/dashboard");
     }, 1500);
   };
 
@@ -115,33 +113,6 @@ const Login = () => {
             </div>
             <h1 className="text-2xl font-bold mb-2">Welcome back</h1>
             <p className="text-muted-foreground text-sm">Sign in to your account to continue</p>
-          </div>
-
-          {/* ─── Account type toggle ─── */}
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            {([
-              { key: "user" as const, icon: User, label: "User", desc: "Personal account" },
-              { key: "enterprise" as const, icon: Building2, label: "Enterprise", desc: "Business account" },
-            ]).map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => setAccountType(opt.key)}
-                className={`flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all ${
-                  accountType === opt.key
-                    ? "border-primary/40 bg-primary/5 shadow-[0_0_12px_rgba(56,189,248,0.08)]"
-                    : "border-border hover:border-primary/20 hover:bg-muted/30"
-                }`}
-              >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${accountType === opt.key ? "bg-primary/10" : "bg-muted"}`}>
-                  <opt.icon className={`w-4 h-4 ${accountType === opt.key ? "text-primary" : "text-muted-foreground"}`} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">{opt.label}</p>
-                  <p className="text-[10px] text-muted-foreground">{opt.desc}</p>
-                </div>
-              </button>
-            ))}
           </div>
 
           {/* ─── Form ─── */}

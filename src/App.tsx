@@ -11,6 +11,8 @@ const Register = lazy(() => import("./pages/Register"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const EnterpriseDashboard = lazy(() => import("./pages/EnterpriseDashboard"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -38,6 +40,8 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/*" element={<Dashboard />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route path="/enterprise" element={<EnterpriseDashboard />} />
             <Route path="/enterprise/*" element={<EnterpriseDashboard />} />
             <Route path="*" element={<NotFound />} />

@@ -390,9 +390,9 @@ const Register = () => {
               />
               <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed">
                 I agree to the{" "}
-                <button type="button" onClick={() => toast.info("Terms of Service are not available in the demo.")} className="text-primary hover:underline">Terms of Service</button>{" "}
+                <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>{" "}
                 and{" "}
-                <button type="button" onClick={() => toast.info("Privacy Policy is not available in the demo.")} className="text-primary hover:underline">Privacy Policy</button>
+                <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
               </label>
             </div>
 

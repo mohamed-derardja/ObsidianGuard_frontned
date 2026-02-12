@@ -528,9 +528,9 @@ const LandingFooter = () => (
         <span className="font-bold text-sm">Phishing D&P</span>
       </div>
       <div className="flex gap-6 text-xs text-muted-foreground">
-        <button onClick={() => toast.info("Privacy Policy page coming soon.")} className="hover:text-foreground transition-colors">Privacy Policy</button>
-        <button onClick={() => toast.info("Terms of Service page coming soon.")} className="hover:text-foreground transition-colors">Terms of Service</button>
-        <button onClick={() => toast.info("Security page coming soon.")} className="hover:text-foreground transition-colors">Security</button>
+        <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+        <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+        <Link to="/privacy" className="hover:text-foreground transition-colors">Security</Link>
       </div>
       <p className="text-xs text-muted-foreground">© 2026 Phishing Detect & Protect. All rights reserved.</p>
     </div>
