@@ -12,14 +12,11 @@ const ProfileSettings = () => {
   const [emailNotif, setEmailNotif] = useState(true);
 
   const [profile, setProfile] = useState({
-    fullName: "Admin User",
     email: "admin@phishingdp.com",
     phone: "+213 555 0123",
     company: "Phishing D&P",
     role: "Security Analyst",
     location: "Algiers, Algeria",
-    website: "https://phishingdp.com",
-    bio: "Cybersecurity professional focused on phishing detection and threat analysis.",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +50,7 @@ const ProfileSettings = () => {
           <div className="relative">
             <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) { setAvatarName(e.target.files[0].name); toast.success(`Avatar updated: ${e.target.files[0].name}`); } }} />
             <div className="w-20 h-20 rounded-full bg-gradient-brand flex items-center justify-center text-2xl font-bold text-primary-foreground">
-              {profile.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+              AU
             </div>
             <button
               onClick={() => avatarRef.current?.click()}
@@ -64,7 +61,7 @@ const ProfileSettings = () => {
             </button>
           </div>
           <div>
-            <h3 className="text-lg font-semibold">{profile.fullName}</h3>
+            <h3 className="text-lg font-semibold">Admin User</h3>
             <p className="text-sm text-muted-foreground">{profile.role}</p>
             <p className="text-xs text-muted-foreground mt-1">{profile.email}</p>
           </div>
@@ -84,19 +81,6 @@ const ProfileSettings = () => {
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label htmlFor="fullName" className="text-xs font-medium text-muted-foreground">Full Name</label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <input
-                id="fullName"
-                value={profile.fullName}
-                onChange={(e) => handleChange("fullName", e.target.value)}
-                className="w-full h-10 pl-9 pr-3 rounded-lg bg-muted/30 border border-primary/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-              />
-            </div>
-          </div>
-
           <div className="space-y-1.5">
             <label htmlFor="email" className="text-xs font-medium text-muted-foreground">Email Address</label>
             <div className="relative">
@@ -151,30 +135,6 @@ const ProfileSettings = () => {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="website" className="text-xs font-medium text-muted-foreground">Website</label>
-            <div className="relative">
-              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <input
-                id="website"
-                type="url"
-                value={profile.website}
-                onChange={(e) => handleChange("website", e.target.value)}
-                className="w-full h-10 pl-9 pr-3 rounded-lg bg-muted/30 border border-primary/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="bio" className="text-xs font-medium text-muted-foreground">Bio</label>
-          <textarea
-            id="bio"
-            rows={3}
-            value={profile.bio}
-            onChange={(e) => handleChange("bio", e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-muted/30 border border-primary/10 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-          />
         </div>
       </motion.div>
 
