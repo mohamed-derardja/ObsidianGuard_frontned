@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   Shield, Radar, ArrowRight, CheckCircle, Lock, Brain, FileSearch,
   Activity, Radio, Package, Zap, Clock, Server, Headphones
 } from "lucide-react";
+import CyberGlobe3D from "@/components/CyberGlobe3D";
 
 /* ===== NAVBAR ===== */
 const LandingNav = () => (
@@ -36,78 +38,90 @@ const LandingNav = () => (
 
 /* ===== HERO ===== */
 const HeroSection = () => (
-  <section className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden">
+  <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
     {/* Grid background */}
     <div className="absolute inset-0 opacity-[0.03]" style={{
       backgroundImage: "linear-gradient(hsl(230 80% 62%) 1px, transparent 1px), linear-gradient(90deg, hsl(230 80% 62%) 1px, transparent 1px)",
       backgroundSize: "60px 60px"
     }} />
-    {/* Radial glow */}
     <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/[0.06] rounded-full blur-[120px] pointer-events-none" />
-    <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-secondary/[0.08] rounded-full blur-[80px] pointer-events-none" />
 
-    <div className="relative z-10 container mx-auto px-4 text-center">
-      {/* Status badge */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-success/20 bg-success/5 text-xs font-medium text-success mb-8"
-      >
-        <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-        System Operational
-      </motion.div>
+    <div className="relative z-10 container mx-auto px-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        {/* Left: Text */}
+        <div className="text-center lg:text-left">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-success/20 bg-success/5 text-xs font-medium text-success mb-8"
+          >
+            <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+            System Operational
+          </motion.div>
 
-      {/* Headline */}
-      <motion.h1
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight leading-[1.1] mb-6"
-      >
-        Secure Your{" "}
-        <br className="hidden sm:block" />
-        <span className="text-gradient">Digital Perimeter</span>
-      </motion.h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight leading-[1.1] mb-6"
+          >
+            Secure Your{" "}
+            <br />
+            <span className="text-gradient">Digital Perimeter</span>
+          </motion.h1>
 
-      {/* Sub */}
-      <motion.p
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto mb-10 leading-relaxed"
-      >
-        AI-driven threat detection and phishing prevention in real-time. Stop attacks before they breach your network.
-      </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="text-muted-foreground text-lg md:text-xl max-w-xl mb-10 leading-relaxed"
+          >
+            AI-driven threat detection and phishing prevention in real-time. Stop attacks before they breach your network.
+          </motion.p>
 
-      {/* CTAs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20"
-      >
-        <Link
-          to="/dashboard"
-          className="group flex items-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-brand text-primary-foreground font-bold text-lg neon-glow hover:scale-[1.03] transition-all duration-300"
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="flex flex-col sm:flex-row items-center lg:items-start gap-4 mb-12"
+          >
+            <Link
+              to="/dashboard"
+              className="group flex items-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-brand text-primary-foreground font-bold text-lg neon-glow hover:scale-[1.03] transition-all duration-300"
+            >
+              <Radar className="w-5 h-5" />
+              Start Free Scan
+            </Link>
+            <a
+              href="#features"
+              className="flex items-center gap-2 px-8 py-4 rounded-xl border border-border text-foreground font-semibold hover:border-primary/30 transition-all duration-300"
+            >
+              View Live Demo
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </motion.div>
+        </div>
+
+        {/* Right: 3D Globe */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5, duration: 0.8 }}
+          className="hidden lg:block"
         >
-          <Radar className="w-5 h-5" />
-          Start Free Scan
-        </Link>
-        <a
-          href="#features"
-          className="flex items-center gap-2 px-8 py-4 rounded-xl border border-border text-foreground font-semibold hover:border-primary/30 transition-all duration-300"
-        >
-          View Live Demo
-          <ArrowRight className="w-4 h-4" />
-        </a>
-      </motion.div>
+          <Suspense fallback={<div className="w-full h-[500px] flex items-center justify-center text-muted-foreground text-sm">Loading 3D...</div>}>
+            <CyberGlobe3D />
+          </Suspense>
+        </motion.div>
+      </div>
 
-      {/* Trust bar */}
+      {/* Trust bar - centered below */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.0 }}
+        className="text-center mt-8 lg:mt-0"
       >
         <p className="text-xs text-muted-foreground/60 uppercase tracking-widest mb-5">Trusted by security teams at</p>
         <div className="flex flex-wrap items-center justify-center gap-8 text-muted-foreground/40">
