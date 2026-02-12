@@ -1,18 +1,32 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Shield, Zap } from "lucide-react";
+import { ArrowRight, Shield, Zap, Radar } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroBg from "@/assets/hero-bg.jpg";
+import heroBg from "@/assets/hero-cyber.jpg";
 
 const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Background */}
       <div className="absolute inset-0">
-        <img src={heroBg} alt="" className="w-full h-full object-cover opacity-40" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
+        <img src={heroBg} alt="" className="w-full h-full object-cover opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5" />
       </div>
 
-      {/* Scan line effect */}
+      {/* Animated radar */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-[0.06] pointer-events-none">
+        <div className="absolute inset-0 rounded-full border border-primary/30" />
+        <div className="absolute inset-[60px] rounded-full border border-primary/20" />
+        <div className="absolute inset-[120px] rounded-full border border-primary/10" />
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: "conic-gradient(from 0deg, transparent 0deg, hsl(230 80% 62% / 0.15) 60deg, transparent 120deg)",
+            animation: "radar-sweep 4s linear infinite",
+          }}
+        />
+      </div>
+
       <div className="absolute inset-0 scan-line pointer-events-none" />
 
       <div className="relative z-10 container mx-auto px-4 text-center">
@@ -23,8 +37,8 @@ const HeroSection = () => {
           transition={{ delay: 0.2 }}
           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-card text-xs font-medium text-primary mb-8"
         >
-          <span className="w-2 h-2 rounded-full bg-primary animate-glow-pulse" />
-          Made for India 🇮🇳 • AI-Powered Protection
+          <Radar className="w-3.5 h-3.5 animate-glow-pulse" />
+          AI-Powered Cybersecurity Platform • Real-Time Threat Detection
         </motion.div>
 
         {/* Headline */}
@@ -32,11 +46,11 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight leading-tight mb-6"
+          className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight leading-[1.1] mb-6"
         >
-          <span className="text-gradient-cyan">30 Crore</span> Indians
+          Detect. Analyze.
           <br />
-          Protected from Phishing
+          <span className="text-gradient">Protect.</span>
         </motion.h1>
 
         {/* Subheadline */}
@@ -46,7 +60,7 @@ const HeroSection = () => {
           transition={{ delay: 0.6 }}
           className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
         >
-          AI that reads emails, scans links, checks attachments & sees fake websites like a human
+          Advanced AI that scans emails, analyzes URLs, checks attachments, and detects brand impersonation — all in real-time.
         </motion.p>
 
         {/* CTAs */}
@@ -58,42 +72,39 @@ const HeroSection = () => {
         >
           <Link
             to="/dashboard"
-            className="group flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-bold text-lg neon-glow hover:scale-105 transition-all duration-300"
+            className="group flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-brand text-primary-foreground font-bold text-lg neon-glow hover:scale-[1.03] transition-all duration-300"
           >
             <Zap className="w-5 h-5" />
-            Try Free Analysis
+            Start Free Analysis
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
           <a
             href="#features"
-            className="flex items-center gap-2 px-8 py-4 rounded-xl border border-border text-foreground font-semibold hover:border-primary/40 transition-all duration-300"
+            className="flex items-center gap-2 px-8 py-4 rounded-xl border border-border text-foreground font-semibold hover:border-primary/30 transition-all duration-300"
           >
             <Shield className="w-5 h-5" />
-            Learn More
+            Explore Features
           </a>
         </motion.div>
 
-        {/* Trust bar */}
+        {/* Stats bar */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.0 }}
-          className="flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground"
+          className="flex flex-wrap items-center justify-center gap-8 text-sm"
         >
-          <span className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-success" />
-            Backed by Economic Times
-          </span>
-          <span className="w-px h-4 bg-border" />
-          <span className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-            5 Lakh Victims Prevented
-          </span>
-          <span className="w-px h-4 bg-border" />
-          <span className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-warning" />
-            24/7 Real-Time Protection
-          </span>
+          {[
+            { value: "2.4M+", label: "Threats Blocked" },
+            { value: "99.7%", label: "Detection Rate" },
+            { value: "<200ms", label: "Scan Speed" },
+            { value: "24/7", label: "Monitoring" },
+          ].map((s) => (
+            <div key={s.label} className="text-center">
+              <p className="text-lg font-bold font-mono text-gradient">{s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+            </div>
+          ))}
         </motion.div>
       </div>
     </section>
