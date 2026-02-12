@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Mail,
   Globe,
@@ -22,34 +24,55 @@ import {
 } from "lucide-react";
 
 const tabs = [
-  { id: "email", label: "Email Analyzer", icon: Mail },
-  { id: "url", label: "URL & Link", icon: Link2 },
-  { id: "domain", label: "Domain Analyzer", icon: Server },
-  { id: "visual", label: "Visual Checker", icon: Eye },
-  { id: "file", label: "Attachment Scanner", icon: FileSearch },
-  { id: "classify", label: "Classification", icon: Tag },
+  { id: "email", label: "Email Analyzer", icon: Mail, route: "/dashboard/email" },
+  { id: "url", label: "URL & Link", icon: Link2, route: "/dashboard/url" },
+  { id: "domain", label: "Domain Analyzer", icon: Server, route: "/dashboard/domain" },
+  { id: "visual", label: "Visual Checker", icon: Eye, route: "/dashboard/visual" },
+  { id: "file", label: "Attachment Scanner", icon: FileSearch, route: "/dashboard/files" },
+  { id: "classify", label: "Classification", icon: Tag, route: "/dashboard/reports" },
 ];
 
-const AnalysisModules = () => {
-  const [active, setActive] = useState("email");
+const AnalysisModules = ({ syncedTab }: { syncedTab?: string }) => {
+  const [active, setActive] = useState(syncedTab && syncedTab !== "overview" ? syncedTab : "email");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (syncedTab && syncedTab !== "overview") {
+      setActive(syncedTab);
+    }
+  }, [syncedTab]);
+
+  const handleTabChange = (tabId: string, route: string) => {
+    setActive(tabId);
+    navigate(route, { replace: true });
+  };
 
   return (
     <div className="glass-card neon-border overflow-hidden">
       {/* Tab Bar */}
-      <div className="flex border-b border-border overflow-x-auto scrollbar-none">
+      <div className="flex border-b border-border overflow-x-auto scrollbar-none" role="tablist" aria-label="Analysis modules">
         {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setActive(t.id)}
-            className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 ${
-              active === t.id
-                ? "border-primary text-primary bg-primary/5"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
-            }`}
-          >
-            <t.icon className="w-4 h-4" />
-            <span className="hidden sm:inline">{t.label}</span>
-          </button>
+          <Tooltip key={t.id}>
+            <TooltipTrigger asChild>
+              <button
+                role="tab"
+                aria-selected={active === t.id}
+                aria-controls={`panel-${t.id}`}
+                onClick={() => handleTabChange(t.id, t.route)}
+                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                  active === t.id
+                    ? "border-primary text-primary bg-primary/5"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                }`}
+              >
+                <t.icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{t.label}</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="sm:hidden">
+              <p>{t.label}</p>
+            </TooltipContent>
+          </Tooltip>
         ))}
       </div>
 

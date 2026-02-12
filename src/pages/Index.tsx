@@ -1,6 +1,8 @@
 import { useRef, useCallback } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useTheme } from "@/hooks/useTheme";
+import { Sun, Moon } from "lucide-react";
 import RoleCards from "@/components/RoleCards";
 import {
   Shield, Radar, ArrowRight, CheckCircle, Lock, Brain, FileSearch,
@@ -9,59 +11,62 @@ import {
 import logo from "@/assets/logo_obsidian_root.svg";
 
 /* ===== NAVBAR ===== */
-const LandingNav = () => (
-  <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-2xl">
-    <div className="container mx-auto flex items-center justify-between h-16 px-4">
-      <Link to="/" className="flex items-center gap-2.5">
-        <img src={logo} alt="Phishing Detect & Protect" className="w-12 h-12 object-contain" />
-        <span className="text-lg font-bold tracking-tight">Phishing <span className="text-gradient">D&P</span></span>
-      </Link>
-
-      <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-        <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-        <a href="#roles" className="hover:text-foreground transition-colors">Roles</a>
-        <a href="#stats" className="hover:text-foreground transition-colors">Analytics</a>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <Link to="/login" className="hidden md:inline-flex px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-          Log In
+const LandingNav = () => {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-2xl" role="navigation" aria-label="Main navigation">
+      <div className="container mx-auto flex items-center justify-between h-16 px-4">
+        <Link to="/" className="flex items-center gap-2.5">
+          <img src={logo} alt="Phishing Detect & Protect" className="w-12 h-12 object-contain" />
+          <span className="text-lg font-bold tracking-tight">Phishing <span className="text-gradient">D&P</span></span>
         </Link>
-        <Link to="/register" className="px-5 py-2 rounded-lg bg-gradient-brand text-white font-semibold text-sm hover:opacity-90 transition-all">
-          Register
-        </Link>
+
+        <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
+          <a href="#features" className="hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded">Features</a>
+          <a href="#roles" className="hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded">Roles</a>
+          <a href="#stats" className="hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded">Analytics</a>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <Link to="/login" className="hidden md:inline-flex px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            Log In
+          </Link>
+          <Link to="/register" className="px-5 py-2 rounded-lg bg-gradient-brand text-white font-semibold text-sm hover:opacity-90 transition-all">
+            Register
+          </Link>
+        </div>
       </div>
-    </div>
-  </nav>
-);
+    </nav>
+  );
+};
 
 /* ===== HERO ===== */
 const HeroSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
 
-  // Motion values for smooth cursor tracking
+  // Motion values for smooth cursor tracking (simplified)
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  // Spring physics tuned for immediate responsiveness with minimal lag
-  const springX = useSpring(mouseX, { stiffness: 150, damping: 25, mass: 0.5 });
-  const springY = useSpring(mouseY, { stiffness: 150, damping: 25, mass: 0.5 });
+  const springX = useSpring(mouseX, { stiffness: 120, damping: 30, mass: 0.8 });
+  const springY = useSpring(mouseY, { stiffness: 120, damping: 30, mass: 0.8 });
 
-  // Derived transforms at different intensities for parallax layers
+  // Simplified parallax layers — only grid + glows + shield tilt
   const gridX = useTransform(springX, [-1, 1], [6, -6]);
   const gridY = useTransform(springY, [-1, 1], [6, -6]);
   const glowAx = useTransform(springX, [-1, 1], [-18, 18]);
   const glowAy = useTransform(springY, [-1, 1], [-14, 14]);
   const glowBx = useTransform(springX, [-1, 1], [14, -14]);
   const glowBy = useTransform(springY, [-1, 1], [10, -10]);
-  const shieldRotY = useTransform(springX, [-1, 1], [-12, 12]);
-  const shieldRotX = useTransform(springY, [-1, 1], [10, -10]);
-
-  // Advanced cursor tracking
-  const distance = useTransform([springX, springY], ([x, y]) => Math.sqrt(x * x + y * y));
-  const angle = useTransform([springX, springY], ([x, y]) => Math.atan2(y, x) * (180 / Math.PI));
-  const intensity = useTransform(distance, [0, 1.4], [1, 0.3]);
-  const threatLevel = useTransform(distance, [0, 0.7, 1.4], ["HIGH", "MEDIUM", "LOW"]);
+  const shieldRotY = useTransform(springX, [-1, 1], [-8, 8]);
+  const shieldRotX = useTransform(springY, [-1, 1], [6, -6]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
     const rect = sectionRef.current?.getBoundingClientRect();
@@ -150,13 +155,13 @@ const HeroSection = () => {
               <Radar className="w-5 h-5" />
               Start Free Scan
             </Link>
-            <a
-              href="#features"
+            <Link
+              to="/dashboard"
               className="flex items-center gap-2 px-8 py-4 rounded-xl border border-border/60 text-foreground font-semibold hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
             >
               View Live Demo
               <ArrowRight className="w-4 h-4" />
-            </a>
+            </Link>
           </motion.div>
 
           {/* Trust bar */}
@@ -168,10 +173,10 @@ const HeroSection = () => {
             <p className="text-xs text-muted-foreground/60 uppercase tracking-widest mb-4">Trusted by security teams at</p>
             <div className="flex flex-wrap items-center lg:justify-start justify-center gap-6 text-muted-foreground/40">
               {[
-                { icon: CheckCircle, name: "TechCorp" },
-                { icon: Shield, name: "SecureNet" },
-                { icon: Lock, name: "VaultInc" },
-                { icon: Server, name: "GuardSys" },
+                { icon: CheckCircle, name: "Sonatrach" },
+                { icon: Shield, name: "Djezzy" },
+                { icon: Lock, name: "Algerie Telecom" },
+                { icon: Server, name: "USTHB" },
               ].map((c) => (
                 <div key={c.name} className="flex items-center gap-2 text-sm">
                   <c.icon className="w-4 h-4" />
@@ -323,239 +328,17 @@ const HeroSection = () => {
               />
             ))}
 
-            {/* Scanning sweep */}
+            {/* Scanning sweep — the only rotating overlay kept for visual interest */}
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
               className="absolute inset-[15%] rounded-full pointer-events-none"
               style={{
-                background: "conic-gradient(from 0deg, transparent 0deg, hsl(190 80% 50% / 0.08) 60deg, transparent 120deg)",
+                background: "conic-gradient(from 0deg, transparent 0deg, hsl(190 80% 50% / 0.06) 60deg, transparent 120deg)",
               }}
             />
 
-            {/* ─── Advanced Interactive Threat Detection System ─── */}
-            
-            {/* Multi-layered scan beam pointing toward cursor */}
-            <motion.div
-              className="absolute inset-0 pointer-events-none overflow-hidden"
-              style={{ rotateZ: angle }}
-            >
-              {/* Primary scan beam */}
-              <motion.div
-                style={{ opacity: intensity }}
-                className="absolute top-1/2 left-1/2 w-1 h-[60%] origin-bottom"
-              >
-                <div
-                  className="w-full h-full"
-                  style={{
-                    background: "linear-gradient(to top, hsl(190 85% 48% / 0.6), hsl(190 85% 48% / 0.2) 50%, transparent)",
-                    transform: "translate(-50%, -100%)",
-                    filter: "blur(2px)",
-                  }}
-                />
-              </motion.div>
-              {/* Secondary wider beam */}
-              <motion.div
-                animate={{ opacity: [0.2, 0.4, 0.2] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute top-1/2 left-1/2 w-8 h-[60%] origin-bottom"
-                style={{
-                  background: "linear-gradient(to top, hsl(190 85% 48% / 0.15), transparent 40%)",
-                  transform: "translate(-50%, -100%)",
-                  filter: "blur(8px)",
-                }}
-              />
-            </motion.div>
-
-            {/* Precision targeting reticle tracking cursor */}
-            <motion.div
-              className="absolute pointer-events-none"
-              style={{
-                left: useTransform(springX, [-1, 1], ["15%", "85%"]),
-                top: useTransform(springY, [-1, 1], ["15%", "85%"]),
-                x: "-50%",
-                y: "-50%",
-              }}
-            >
-              {/* Outer rotating lock ring */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                className="relative w-16 h-16"
-              >
-                <div className="absolute inset-0 border-2 border-red-400/40 rounded-full" style={{ borderStyle: "dashed", borderDasharray: "8 8" }} />
-              </motion.div>
-              {/* Inner pulsing reticle */}
-              <motion.div
-                style={{ scale: intensity }}
-                className="absolute inset-0 flex items-center justify-center"
-              >
-                <motion.div
-                  animate={{ scale: [0.9, 1.15, 0.9], opacity: [0.5, 0.8, 0.5] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative w-10 h-10"
-                >
-                  {/* Corner brackets */}
-                  <div className="absolute top-0 left-0 w-3 h-3 border-l-2 border-t-2 border-red-400" />
-                  <div className="absolute top-0 right-0 w-3 h-3 border-r-2 border-t-2 border-red-400" />
-                  <div className="absolute bottom-0 left-0 w-3 h-3 border-l-2 border-b-2 border-red-400" />
-                  <div className="absolute bottom-0 right-0 w-3 h-3 border-r-2 border-b-2 border-red-400" />
-                  {/* Center crosshair */}
-                  <div className="absolute left-1/2 top-1/2 w-1 h-4 -translate-x-1/2 -translate-y-1/2 bg-red-400/80" />
-                  <div className="absolute left-1/2 top-1/2 w-4 h-1 -translate-x-1/2 -translate-y-1/2 bg-red-400/80" />
-                  {/* Pulsing center dot */}
-                  <motion.div
-                    animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
-                    transition={{ duration: 0.8, repeat: Infinity }}
-                    className="absolute left-1/2 top-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full shadow-[0_0_12px_rgba(239,68,68,0.9)]"
-                  />
-                </motion.div>
-              </motion.div>
-            </motion.div>
-
-            {/* Defensive energy barriers expanding toward cursor */}
-            <motion.div
-              className="absolute inset-0 pointer-events-none"
-              style={{ rotateZ: angle }}
-            >
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  animate={{
-                    scaleX: [0.4, 1.6],
-                    scaleY: [0.4, 1.3],
-                    opacity: [0.6, 0],
-                  }}
-                  transition={{
-                    delay: i * 0.5,
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "easeOut",
-                  }}
-                  className="absolute left-1/2 top-1/2 w-24 h-24 -translate-x-1/2 -translate-y-1/2 border-2 border-primary/40 rounded-full"
-                  style={{ borderStyle: "solid" }}
-                />
-              ))}
-            </motion.div>
-
-            {/* Neutralization particles bursting from shield */}
-            {[...Array(6)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute left-1/2 top-1/2 pointer-events-none"
-                style={{
-                  rotate: useTransform(angle, (a) => a + (i * 60)),
-                }}
-              >
-                <motion.div
-                  animate={{
-                    x: [0, 100],
-                    opacity: [0.8, 0],
-                    scale: [1, 0.3],
-                  }}
-                  transition={{
-                    delay: i * 0.15,
-                    duration: 1.2,
-                    repeat: Infinity,
-                    ease: "easeOut",
-                  }}
-                  className="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)]"
-                />
-              </motion.div>
-            ))}
-
-            {/* Centered "THREAT DETECTED" badge with dramatic animation */}
-            <motion.div
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-50"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ 
-                scale: intensity > 0.3 ? [0.9, 1.1, 1] : 0,
-                opacity: intensity > 0.3 ? [0, 1, 1] : 0,
-                rotate: intensity > 0.3 ? [0, 2, -2, 0] : 0,
-              }}
-              transition={{
-                scale: { duration: 0.4, ease: "easeOut" },
-                opacity: { duration: 0.3 },
-                rotate: { duration: 0.5, repeat: Infinity, ease: "easeInOut" },
-              }}
-            >
-              <motion.div
-                animate={{
-                  boxShadow: [
-                    "0 0 20px rgba(239,68,68,0.3), 0 0 40px rgba(239,68,68,0.2)",
-                    "0 0 30px rgba(239,68,68,0.5), 0 0 60px rgba(239,68,68,0.3)",
-                    "0 0 20px rgba(239,68,68,0.3), 0 0 40px rgba(239,68,68,0.2)",
-                  ],
-                  scale: [1, 1.05, 1],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 border-2 border-red-400/60 backdrop-blur-md"
-              >
-                <motion.div
-                  animate={{ 
-                    scale: [1, 1.4, 1],
-                    boxShadow: [
-                      "0 0 5px rgba(239,68,68,0.8)",
-                      "0 0 15px rgba(239,68,68,1)",
-                      "0 0 5px rgba(239,68,68,0.8)",
-                    ],
-                  }}
-                  transition={{ duration: 0.8, repeat: Infinity }}
-                  className="w-2.5 h-2.5 rounded-full bg-red-500"
-                />
-                <motion.span 
-                  animate={{
-                    opacity: [0.8, 1, 0.8],
-                  }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                  className="text-sm font-black text-red-400 tracking-widest whitespace-nowrap drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]"
-                >
-                  THREAT DETECTED
-                </motion.span>
-              </motion.div>
-            </motion.div>
-
-            {/* Energy connection grid to cursor */}
-            <svg className="absolute inset-0 pointer-events-none" style={{ overflow: "visible" }}>
-              <defs>
-                <linearGradient id="energy-beam" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="hsl(190 85% 48%)" stopOpacity="0.6" />
-                  <stop offset="50%" stopColor="hsl(190 85% 48%)" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="hsl(190 85% 48%)" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              {/* Primary energy line */}
-              <motion.line
-                x1="50%"
-                y1="50%"
-                x2={useTransform(springX, [-1, 1], ["25%", "75%"])}
-                y2={useTransform(springY, [-1, 1], ["25%", "75%"])}
-                stroke="url(#energy-beam)"
-                strokeWidth="3"
-                strokeDasharray="6 4"
-              >
-                <animate attributeName="stroke-dashoffset" from="0" to="10" dur="0.4s" repeatCount="indefinite" />
-              </motion.line>
-              {/* Secondary pulse line */}
-              <motion.line
-                x1="50%"
-                y1="50%"
-                x2={useTransform(springX, [-1, 1], ["25%", "75%"])}
-                y2={useTransform(springY, [-1, 1], ["25%", "75%"])}
-                stroke="hsl(190 85% 48%)"
-                strokeWidth="1"
-                strokeOpacity="0.4"
-                strokeDasharray="2 6"
-              >
-                <animate attributeName="stroke-dashoffset" from="8" to="0" dur="0.6s" repeatCount="indefinite" />
-              </motion.line>
-            </svg>
-
-            {/* Status label — improved 3D design */}
+            {/* Status label */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -744,9 +527,9 @@ const LandingFooter = () => (
         <span className="font-bold text-sm">Phishing D&P</span>
       </div>
       <div className="flex gap-6 text-xs text-muted-foreground">
-        <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
-        <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
-        <a href="#" className="hover:text-foreground transition-colors">Security</a>
+        <button className="hover:text-foreground transition-colors">Privacy Policy</button>
+        <button className="hover:text-foreground transition-colors">Terms of Service</button>
+        <button className="hover:text-foreground transition-colors">Security</button>
       </div>
       <p className="text-xs text-muted-foreground">© 2026 Phishing Detect & Protect. All rights reserved.</p>
     </div>

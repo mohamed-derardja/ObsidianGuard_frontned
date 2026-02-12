@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
-  Eye, EyeOff, Shield, User, Mail, Lock, ArrowRight, CheckCircle,
+  Eye, EyeOff, Shield, User, Mail, Lock, ArrowRight, ArrowLeft, CheckCircle,
   Building2, Zap, Globe, FileSearch, BarChart3, Headphones, Users, Key
 } from "lucide-react";
 import logo from "@/assets/logo_obsidian_root.svg";
@@ -61,13 +62,27 @@ const Register = () => {
     { label: "Passwords match", met: password.length > 0 && password === confirmPassword },
   ];
 
+  const navigate = useNavigate();
+
+  const passwordStrength = passwordChecks.filter((c) => c.met).length;
+  const strengthLabel = passwordStrength <= 1 ? "Weak" : passwordStrength <= 2 ? "Fair" : passwordStrength <= 3 ? "Good" : "Strong";
+  const strengthColor = passwordStrength <= 1 ? "bg-danger" : passwordStrength <= 2 ? "bg-warning" : passwordStrength <= 3 ? "bg-info" : "bg-success";
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!agreed) return;
+    if (!agreed) {
+      toast.error("Please agree to the Terms of Service and Privacy Policy.");
+      return;
+    }
+    if (passwordStrength < 4) {
+      toast.error("Please meet all password requirements before continuing.");
+      return;
+    }
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      window.location.href = "/dashboard";
+      toast.success("Account created successfully!", { description: "Welcome to Phishing D&P." });
+      navigate("/dashboard");
     }, 1500);
   };
 
@@ -84,13 +99,18 @@ const Register = () => {
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-[hsl(190_85%_48%/0.03)] rounded-full blur-[120px] pointer-events-none" />
 
       {/* ─── Left panel — pack details (hidden on mobile) ─── */}
-      <div className="hidden lg:flex lg:w-1/2 relative items-start justify-center pt-16 p-12">
+      <div className="hidden lg:flex lg:w-1/2 relative items-start justify-center pt-10 p-12">
         <div className="absolute inset-0 bg-gradient-to-bl from-[hsl(190_85%_48%/0.04)] via-transparent to-[hsl(260_70%_55%/0.03)]" />
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
           className="relative z-10 max-w-md w-full">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
+            <ArrowLeft className="w-4 h-4" />
+            Back to home
+          </Link>
+
           <Link to="/" className="flex items-center gap-3 mb-10">
             <img src={logo} alt="Phishing Detect & Protect" className="w-10 h-10 object-contain" />
             <span className="text-xl font-bold">Phishing <span className="text-gradient">D&P</span></span>
@@ -157,13 +177,18 @@ const Register = () => {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          {/* Mobile logo */}
-          <Link to="/" className="flex lg:hidden items-center gap-2.5 mb-10">
-            <img src={logo} alt="Phishing Detect & Protect" className="w-8 h-8 object-contain" />
-            <span className="text-lg font-bold">Phishing <span className="text-gradient">D&P</span></span>
-          </Link>
-
           <div className="mb-6">
+            {/* Logo + back arrow — visible on mobile only */}
+            <div className="lg:hidden mb-6">
+              <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+                <ArrowLeft className="w-4 h-4" />
+                Back to home
+              </Link>
+              <Link to="/" className="flex items-center gap-2.5">
+                <img src={logo} alt="Phishing Detect & Protect" className="w-9 h-9 object-contain" />
+                <span className="text-lg font-bold">Phishing <span className="text-gradient">D&P</span></span>
+              </Link>
+            </div>
             <h1 className="text-2xl font-bold mb-2">Create your account</h1>
             <p className="text-muted-foreground text-sm">Select your plan and get started</p>
           </div>
@@ -229,7 +254,7 @@ const Register = () => {
           </AnimatePresence>
 
           {/* ─── Form ─── */}
-          <form onSubmit={handleSubmit} className="p-7 rounded-xl border border-border bg-card/60 backdrop-blur-lg shadow-[0_0_40px_rgba(0,0,0,0.4)] space-y-4">
+          <form onSubmit={handleSubmit} className="p-7 rounded-xl border border-border bg-card/60 backdrop-blur-lg shadow-[0_0_40px_rgba(0,0,0,0.15)] space-y-4" noValidate>
             {/* Company Name — enterprise only */}
             <AnimatePresence>
               {accountType === "enterprise" && (
@@ -251,7 +276,7 @@ const Register = () => {
                       onChange={(e) => setCompanyName(e.target.value)}
                       placeholder="Acme Inc."
                       required
-                      className="w-full h-11 pl-10 pr-4 rounded-lg bg-black/40 border border-primary/10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-black/60 transition-all shadow-inner"
+                      className="w-full h-11 pl-10 pr-4 rounded-lg bg-muted/30 border border-primary/10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                     />
                   </div>
                 </motion.div>
@@ -272,7 +297,7 @@ const Register = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={accountType === "enterprise" ? "you@company.com" : "you@email.com"}
                   required
-                  className="w-full h-11 pl-10 pr-4 rounded-lg bg-black/40 border border-primary/10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-black/60 transition-all shadow-inner"
+                  className="w-full h-11 pl-10 pr-4 rounded-lg bg-muted/30 border border-primary/10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                 />
               </div>
             </div>
@@ -291,12 +316,13 @@ const Register = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a strong password"
                   required
-                  className="w-full h-11 pl-10 pr-11 rounded-lg bg-black/40 border border-primary/10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-black/60 transition-all shadow-inner"
+                  className="w-full h-11 pl-10 pr-11 rounded-lg bg-muted/30 border border-primary/10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -317,7 +343,7 @@ const Register = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repeat your password"
                   required
-                  className="w-full h-11 pl-10 pr-4 rounded-lg bg-black/40 border border-primary/10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-black/60 transition-all shadow-inner"
+                  className="w-full h-11 pl-10 pr-4 rounded-lg bg-muted/30 border border-primary/10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
                 />
               </div>
             </div>
@@ -327,14 +353,28 @@ const Register = () => {
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
-                className="grid grid-cols-2 gap-1.5"
+                className="space-y-2.5"
               >
-                {passwordChecks.map((check) => (
-                  <div key={check.label} className="flex items-center gap-1.5 text-xs">
-                    <CheckCircle className={`w-3 h-3 flex-shrink-0 ${check.met ? "text-success" : "text-muted-foreground/40"}`} />
-                    <span className={check.met ? "text-success" : "text-muted-foreground/60"}>{check.label}</span>
+                {/* Visual strength bar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Password strength</span>
+                    <span className={`text-xs font-medium ${passwordStrength <= 1 ? "text-danger" : passwordStrength <= 2 ? "text-warning" : passwordStrength <= 3 ? "text-info" : "text-success"}`}>{strengthLabel}</span>
                   </div>
-                ))}
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4].map((step) => (
+                      <div key={step} className={`h-1.5 flex-1 rounded-full transition-colors ${passwordStrength >= step ? strengthColor : "bg-muted"}`} />
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {passwordChecks.map((check) => (
+                    <div key={check.label} className="flex items-center gap-1.5 text-xs">
+                      <CheckCircle className={`w-3 h-3 flex-shrink-0 ${check.met ? "text-success" : "text-muted-foreground/40"}`} />
+                      <span className={check.met ? "text-success" : "text-muted-foreground/60"}>{check.label}</span>
+                    </div>
+                  ))}
+                </div>
               </motion.div>
             )}
 
@@ -349,9 +389,9 @@ const Register = () => {
               />
               <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed">
                 I agree to the{" "}
-                <a href="#" className="text-primary hover:underline">Terms of Service</a>{" "}
+                <button type="button" onClick={() => toast.info("Terms of Service are not available in the demo.")} className="text-primary hover:underline">Terms of Service</button>{" "}
                 and{" "}
-                <a href="#" className="text-primary hover:underline">Privacy Policy</a>
+                <button type="button" onClick={() => toast.info("Privacy Policy is not available in the demo.")} className="text-primary hover:underline">Privacy Policy</button>
               </label>
             </div>
 
@@ -383,7 +423,7 @@ const Register = () => {
           <div>
             <button 
               type="button"
-              className="w-full h-12 rounded-lg bg-white text-gray-900 font-semibold text-sm flex items-center justify-center gap-3 hover:bg-gray-50 transition-all shadow-md hover:shadow-lg border border-gray-200"
+              className="w-full h-12 rounded-lg bg-card border border-border text-foreground font-semibold text-sm flex items-center justify-center gap-3 hover:bg-muted transition-all shadow-sm hover:shadow-md"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
               Continue with Google
