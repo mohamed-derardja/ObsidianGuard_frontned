@@ -147,21 +147,14 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="flex flex-col sm:flex-row items-center lg:items-start gap-4 mb-12"
+            className="text-center lg:text-left mb-12"
           >
             <Link
               to="/register"
-              className="group flex items-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-brand text-white font-bold text-lg neon-glow hover:scale-[1.03] transition-all duration-300"
+              className="group inline-flex items-center gap-3 px-10 py-4 rounded-xl bg-gradient-brand text-white font-bold text-lg neon-glow hover:scale-[1.03] transition-all duration-300"
             >
               <Radar className="w-5 h-5" />
               Start Free Scan
-            </Link>
-            <Link
-              to="/dashboard"
-              className="flex items-center gap-2 px-8 py-4 rounded-xl border border-border/60 text-foreground font-semibold hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
-            >
-              View Live Demo
-              <ArrowRight className="w-4 h-4" />
             </Link>
           </motion.div>
 
