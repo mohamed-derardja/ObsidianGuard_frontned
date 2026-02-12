@@ -1,6 +1,7 @@
-import { Suspense } from "react";
+import { Suspense, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import SplashScreen from "@/components/SplashScreen";
 import {
   Shield, Radar, ArrowRight, CheckCircle, Lock, Brain, FileSearch,
   Activity, Radio, Package, Zap, Clock, Server, Headphones
@@ -290,15 +291,21 @@ const LandingFooter = () => (
 );
 
 /* ===== PAGE ===== */
-const LandingPage = () => (
-  <div className="min-h-screen bg-background">
-    <LandingNav />
-    <HeroSection />
-    <FeaturesSection />
-    <StatsBar />
-    <CTASection />
-    <LandingFooter />
-  </div>
-);
+const LandingPage = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  const handleSplashComplete = useCallback(() => setShowSplash(false), []);
+
+  return (
+    <div className="min-h-screen bg-background">
+      {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+      <LandingNav />
+      <HeroSection />
+      <FeaturesSection />
+      <StatsBar />
+      <CTASection />
+      <LandingFooter />
+    </div>
+  );
+};
 
 export default LandingPage;
