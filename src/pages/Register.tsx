@@ -81,8 +81,9 @@ const Register = () => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
+      localStorage.setItem("accountType", accountType);
       toast.success("Account created successfully!", { description: "Welcome to Phishing D&P." });
-      navigate("/dashboard");
+      navigate(accountType === "enterprise" ? "/enterprise" : "/dashboard");
     }, 1500);
   };
 
