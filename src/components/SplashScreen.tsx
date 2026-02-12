@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const scanLines = [
   "INITIALIZING UAV RECON SYSTEMS...",
@@ -117,9 +117,9 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
                 <motion.div
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
-                  className="w-14 h-14 rounded-full bg-gradient-brand flex items-center justify-center shadow-[0_0_30px_hsl(230_80%_62%/0.3)]"
+                  className="w-14 h-14 rounded-full bg-background/80 flex items-center justify-center shadow-[0_0_30px_hsl(230_80%_62%/0.3)]"
                 >
-                  <Shield className="w-7 h-7 text-primary-foreground" />
+                  <img src={logo} alt="Logo" className="w-10 h-10 object-contain" />
                 </motion.div>
               </div>
             </div>
@@ -131,7 +131,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
               transition={{ delay: 0.3 }}
               className="text-center"
             >
-              <h1 className="text-2xl font-bold tracking-tight mb-1">PhishSleuth</h1>
+              <h1 className="text-2xl font-bold tracking-tight mb-1">Phishing Detect & Protect</h1>
               <p className="text-xs text-muted-foreground uppercase tracking-[0.3em]">UAV Threat Scanner</p>
             </motion.div>
 

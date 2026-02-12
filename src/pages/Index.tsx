@@ -7,16 +7,15 @@ import {
   Activity, Radio, Package, Zap, Clock, Server, Headphones
 } from "lucide-react";
 import CyberGlobe3D from "@/components/CyberGlobe3D";
+import logo from "@/assets/logo.png";
 
 /* ===== NAVBAR ===== */
 const LandingNav = () => (
   <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
     <div className="container mx-auto flex items-center justify-between h-16 px-4">
       <Link to="/" className="flex items-center gap-2.5">
-        <div className="w-9 h-9 rounded-lg bg-gradient-brand flex items-center justify-center">
-          <Shield className="w-5 h-5 text-primary-foreground" />
-        </div>
-        <span className="text-lg font-bold tracking-tight">PhishSleuth</span>
+        <img src={logo} alt="Phishing Detect & Protect" className="w-9 h-9 object-contain" />
+        <span className="text-lg font-bold tracking-tight">Phishing <span className="text-gradient">D&P</span></span>
       </Link>
 
       <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
@@ -255,7 +254,7 @@ const CTASection = () => (
         <div className="relative p-12 md:p-20 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to fortify your business?</h2>
           <p className="text-muted-foreground max-w-md mx-auto mb-8">
-            Join thousands of companies using PhishSleuth to protect their most valuable digital assets.
+            Join thousands of companies using Phishing Detect & Protect to safeguard their most valuable digital assets.
           </p>
           <Link
             to="/dashboard"
@@ -275,17 +274,15 @@ const LandingFooter = () => (
   <footer className="border-t border-border py-10">
     <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
       <div className="flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-md bg-gradient-brand flex items-center justify-center">
-          <Shield className="w-4 h-4 text-primary-foreground" />
-        </div>
-        <span className="font-bold">PhishSleuth</span>
+        <img src={logo} alt="Phishing Detect & Protect" className="w-7 h-7 object-contain" />
+        <span className="font-bold">Phishing D&P</span>
       </div>
       <div className="flex gap-6 text-xs text-muted-foreground">
         <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
         <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
         <a href="#" className="hover:text-foreground transition-colors">Security</a>
       </div>
-      <p className="text-xs text-muted-foreground">© 2026 PhishSleuth Inc. All rights reserved.</p>
+      <p className="text-xs text-muted-foreground">© 2026 Phishing Detect & Protect. All rights reserved.</p>
     </div>
   </footer>
 );
