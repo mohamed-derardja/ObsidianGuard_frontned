@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import FeatureCards from "@/components/FeatureCards";
+import RoleCards from "@/components/RoleCards";
 import Footer from "@/components/Footer";
 
 const Index = () => (
@@ -8,6 +9,7 @@ const Index = () => (
     <Navbar />
     <HeroSection />
     <FeatureCards />
+    <RoleCards />
     <Footer />
   </div>
 );

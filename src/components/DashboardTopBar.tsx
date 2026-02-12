@@ -1,26 +1,26 @@
-import { Shield, Bell, ChevronDown } from "lucide-react";
+import { Shield, Bell, ChevronDown, Activity } from "lucide-react";
 
 const DashboardTopBar = () => (
-  <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card/40 backdrop-blur-md">
+  <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card/30 backdrop-blur-md">
     <div className="flex items-center gap-4">
       <div className="md:hidden flex items-center gap-2">
         <Shield className="w-5 h-5 text-primary" />
-        <span className="font-bold text-sm">Phish<span className="text-primary">Sleuth</span></span>
+        <span className="font-bold text-sm">Phish<span className="text-gradient">Sleuth</span></span>
       </div>
-      <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
-        <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-        <span className="font-mono">12,847</span> threats blocked in real-time
+      <div className="hidden md:flex items-center gap-3 text-sm text-muted-foreground">
+        <Activity className="w-4 h-4 text-success animate-pulse" />
+        <span className="font-mono text-xs">12,847</span>
+        <span>threats blocked in real-time</span>
       </div>
     </div>
 
     <div className="flex items-center gap-4">
-      <span className="text-xs text-muted-foreground">🇮🇳 India</span>
       <button className="relative p-2 rounded-lg hover:bg-muted transition-colors">
         <Bell className="w-4 h-4 text-muted-foreground" />
         <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-danger" />
       </button>
       <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-muted transition-colors">
-        <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">A</div>
+        <div className="w-7 h-7 rounded-full bg-gradient-brand flex items-center justify-center text-xs font-bold text-primary-foreground">A</div>
         <ChevronDown className="w-3 h-3 text-muted-foreground" />
       </button>
     </div>
