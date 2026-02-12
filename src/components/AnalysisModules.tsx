@@ -1,18 +1,33 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Mail, Globe, Eye, FileSearch, Upload, Search, AlertTriangle,
-  CheckCircle, XCircle, Link2, ShieldAlert, FileWarning, Server,
-  Lock, Clock, Hash, Tag
+  Mail,
+  Globe,
+  Eye,
+  FileSearch,
+  Upload,
+  Search,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Link2,
+  ShieldAlert,
+  FileWarning,
+  Server,
+  Lock,
+  Hash,
+  Tag,
+  BadgeCheck,
+  Bot,
 } from "lucide-react";
 
 const tabs = [
   { id: "email", label: "Email Analyzer", icon: Mail },
   { id: "url", label: "URL & Link", icon: Link2 },
-  { id: "domain", label: "Domain Intel", icon: Server },
+  { id: "domain", label: "Domain Analyzer", icon: Server },
   { id: "visual", label: "Visual Checker", icon: Eye },
-  { id: "file", label: "File Scanner", icon: FileSearch },
-  { id: "classify", label: "Classifier", icon: Tag },
+  { id: "file", label: "Attachment Scanner", icon: FileSearch },
+  { id: "classify", label: "Classification", icon: Tag },
 ];
 
 const AnalysisModules = () => {
@@ -71,7 +86,7 @@ const EmailPanel = () => {
   return (
     <div className="space-y-5">
       <div>
-        <label className="text-sm font-medium mb-2 block">Paste or type email content</label>
+        <label className="text-sm font-medium mb-2 block">Upload or paste email content</label>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -80,14 +95,32 @@ const EmailPanel = () => {
         />
       </div>
       <div className="flex flex-wrap gap-3">
+        <button className="px-6 py-2.5 rounded-lg border border-border text-sm font-semibold hover:border-primary/30 hover:bg-primary/5 transition-all">
+          <Upload className="w-4 h-4 inline mr-2" />
+          Upload .eml/.msg
+        </button>
         <button onClick={analyze} className="px-6 py-2.5 bg-gradient-brand text-primary-foreground rounded-lg font-semibold text-sm hover:opacity-90 transition-all">
           <Search className="w-4 h-4 inline mr-2" />
           Analyze Email
         </button>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> Header Analysis</span>
-          <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Sender Verification</span>
-          <span className="flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Phishing Language Detection</span>
+          <span className="flex items-center gap-1"><BadgeCheck className="w-3 h-3" /> Sender Authenticity</span>
+          <span className="flex items-center gap-1"><Bot className="w-3 h-3" /> AI Language Detection</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+        <div className="glass-card p-3">
+          <p className="text-muted-foreground mb-1">Header Analysis</p>
+          <p className="font-mono">SPF: SoftFail • DKIM: Missing</p>
+        </div>
+        <div className="glass-card p-3">
+          <p className="text-muted-foreground mb-1">Sender Authenticity</p>
+          <p className="font-mono text-warning">display-name spoofing detected</p>
+        </div>
+        <div className="glass-card p-3">
+          <p className="text-muted-foreground mb-1">AI Risk Language</p>
+          <p className="font-mono">urgency + credential request + link coercion</p>
         </div>
       </div>
       {result && <ResultCard result={result} confidence={result === "phishing" ? 96.4 : result === "suspicious" ? 72.1 : 12.3} />}
@@ -134,12 +167,12 @@ const UrlPanel = () => {
           <ResultCard result={result} confidence={result === "phishing" ? 94.7 : result === "suspicious" ? 68.2 : 8.5} />
           <div className="glass-card p-4 space-y-2.5 text-xs">
             <h4 className="font-semibold text-sm mb-3">URL Intelligence Report</h4>
-            <InfoRow label="Domain Mismatch" value="Detected" status="danger" />
-            <InfoRow label="Homograph Attack" value="Likely (Cyrillic chars)" status="warning" />
-            <InfoRow label="Entropy Score" value="8.72 / 10" status="danger" />
+            <InfoRow label="Risk Indicator" value={result === "phishing" ? "🚨 Phishing" : result === "suspicious" ? "⚠️ Suspicious" : "✅ Safe"} status={result === "phishing" ? "danger" : result === "suspicious" ? "warning" : "safe"} />
+            <InfoRow label="Domain Reputation Score" value={result === "phishing" ? "11 / 100" : result === "suspicious" ? "54 / 100" : "92 / 100"} status={result === "phishing" ? "danger" : result === "suspicious" ? "warning" : "safe"} />
+            <InfoRow label="SSL Certificate" value={result === "phishing" ? "Self-signed" : "DV - Valid"} status={result === "phishing" ? "danger" : "safe"} />
+            <InfoRow label="WHOIS Created" value={result === "phishing" ? "2 days ago" : "6 years ago"} status={result === "phishing" ? "danger" : "safe"} />
+            <InfoRow label="WHOIS Registrar" value={result === "phishing" ? "Unknown Registrar" : "Cloudflare Registrar"} status={result === "phishing" ? "warning" : "safe"} />
             <InfoRow label="Typosquatting" value="paypa1 → paypal" status="danger" />
-            <InfoRow label="SSL Certificate" value="Self-signed" status="warning" />
-            <InfoRow label="WHOIS Age" value="2 days" status="danger" />
           </div>
         </div>
       )}
@@ -148,58 +181,74 @@ const UrlPanel = () => {
 };
 
 /* ===== DOMAIN PANEL ===== */
-const DomainPanel = () => (
-  <div className="space-y-5">
-    <div>
-      <label className="text-sm font-medium mb-2 block">Enter domain name</label>
-      <div className="flex gap-3">
-        <input placeholder="example.com" className="flex-1 bg-muted/40 border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 font-mono transition-all" />
-        <button className="px-5 py-2.5 bg-gradient-brand text-primary-foreground rounded-lg font-semibold text-sm whitespace-nowrap hover:opacity-90 transition-all">
-          <Globe className="w-4 h-4 inline mr-1" />
-          Investigate
-        </button>
-      </div>
-    </div>
+const DomainPanel = () => {
+  const dnsQuality = [
+    { label: "A", value: 100 },
+    { label: "MX", value: 82 },
+    { label: "SPF", value: 15 },
+    { label: "DMARC", value: 8 },
+    { label: "DKIM", value: 22 },
+  ];
 
-    {/* Demo results */}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="glass-card p-5 space-y-3">
-        <h4 className="font-semibold text-sm flex items-center gap-2"><Server className="w-4 h-4 text-primary" /> Domain Info</h4>
-        <InfoRow label="Registrar" value="GoDaddy LLC" />
-        <InfoRow label="Domain Age" value="3 days" status="danger" />
-        <InfoRow label="IP Address" value="185.234.72.18" />
-        <InfoRow label="Country" value="🇷🇺 Russia" status="warning" />
-        <InfoRow label="Blacklist Status" value="Listed (3 databases)" status="danger" />
+  return (
+    <div className="space-y-5">
+      <div>
+        <label className="text-sm font-medium mb-2 block">Enter domain name</label>
+        <div className="flex gap-3">
+          <input placeholder="example.com" className="flex-1 bg-muted/40 border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 font-mono transition-all" />
+          <button className="px-5 py-2.5 bg-gradient-brand text-primary-foreground rounded-lg font-semibold text-sm whitespace-nowrap hover:opacity-90 transition-all">
+            <Globe className="w-4 h-4 inline mr-1" />
+            Investigate
+          </button>
+        </div>
       </div>
-      <div className="glass-card p-5 space-y-3">
-        <h4 className="font-semibold text-sm flex items-center gap-2"><Hash className="w-4 h-4 text-primary" /> DNS Records</h4>
-        <InfoRow label="A Record" value="185.234.72.18" />
-        <InfoRow label="MX Record" value="mail.suspicious-host.ru" status="warning" />
-        <InfoRow label="SPF" value="Not configured" status="danger" />
-        <InfoRow label="DMARC" value="Not configured" status="danger" />
-        <InfoRow label="DKIM" value="Not configured" status="danger" />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="glass-card p-5 space-y-3">
+          <h4 className="font-semibold text-sm flex items-center gap-2"><Server className="w-4 h-4 text-primary" /> Domain Profile</h4>
+          <InfoRow label="Registrar" value="GoDaddy LLC" />
+          <InfoRow label="Domain Age" value="3 days" status="danger" />
+          <InfoRow label="IP Address" value="185.234.72.18" />
+          <InfoRow label="Blacklist Status" value="Listed (3 databases)" status="danger" />
+          <InfoRow label="ASN" value="AS58061" status="warning" />
+        </div>
+
+        <div className="glass-card p-5 space-y-3">
+          <h4 className="font-semibold text-sm flex items-center gap-2"><Hash className="w-4 h-4 text-primary" /> DNS Records Visualization</h4>
+          {dnsQuality.map((record) => (
+            <div key={record.label}>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-muted-foreground">{record.label}</span>
+                <span className="font-mono">{record.value}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <div className={`h-full rounded-full ${record.value > 70 ? "bg-success" : record.value > 30 ? "bg-warning" : "bg-danger"}`} style={{ width: `${record.value}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ===== VISUAL PANEL ===== */
 const VisualPanel = () => (
   <div className="space-y-5">
-    <label className="text-sm font-medium mb-2 block">Upload a website screenshot for brand impersonation detection</label>
+    <label className="text-sm font-medium mb-2 block">Analyze website screenshots for impersonation and visual fraud</label>
     <div className="border-2 border-dashed border-border rounded-xl p-12 text-center hover:border-primary/30 transition-colors cursor-pointer group">
       <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3 group-hover:text-primary transition-colors" />
       <p className="text-sm text-muted-foreground">Drag & drop screenshot or click to upload</p>
       <p className="text-xs text-muted-foreground/50 mt-1">PNG, JPG up to 10MB</p>
     </div>
-    <div className="glass-card p-5">
+    <div className="glass-card p-5 space-y-4">
       <div className="flex items-start gap-4">
         <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0">
           <Eye className="w-5 h-5 text-warning" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-medium mb-1">Demo: <span className="text-warning">97% visual match</span> with PayPal login page</p>
-          <p className="text-xs text-muted-foreground mb-3">Perceptual hash comparison detected near-identical visual layout</p>
+          <p className="text-sm font-medium mb-1">Detected: <span className="text-warning">97% visual similarity</span> with PayPal login page</p>
+          <p className="text-xs text-muted-foreground mb-3">Perceptual comparison with known legitimate websites flags likely brand impersonation.</p>
           <div className="flex flex-wrap gap-2 text-xs">
             <span className="badge-phishing px-2 py-1 rounded-md">Brand Impersonation</span>
             <span className="badge-suspicious px-2 py-1 rounded-md">Modified Logo</span>
@@ -208,6 +257,11 @@ const VisualPanel = () => (
         </div>
         <span className="text-2xl font-bold font-mono text-warning">97%</span>
       </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+        <InfoTile label="Legitimate Brand" value="paypal.com" />
+        <InfoTile label="Detected Host" value="paypa1-secure.com" />
+        <InfoTile label="Visual Similarity Score" value="97 / 100" tone="warning" />
+      </div>
     </div>
   </div>
 );
@@ -215,22 +269,36 @@ const VisualPanel = () => (
 /* ===== FILE PANEL ===== */
 const FilePanel = () => (
   <div className="space-y-5">
-    <label className="text-sm font-medium mb-2 block">Upload suspicious attachments for deep scanning</label>
+    <label className="text-sm font-medium mb-2 block">Scan ZIP, PDF, and file attachments for malware behavior</label>
     <div className="border-2 border-dashed border-border rounded-xl p-12 text-center hover:border-primary/30 transition-colors cursor-pointer group">
       <FileSearch className="w-10 h-10 text-muted-foreground mx-auto mb-3 group-hover:text-primary transition-colors" />
       <p className="text-sm text-muted-foreground">Drag & drop ZIP, PDF, DOCX files</p>
-      <p className="text-xs text-muted-foreground/50 mt-1">Scans inside archives for hidden threats • Sandbox analysis</p>
+      <p className="text-xs text-muted-foreground/50 mt-1">Malware detection + hash signature + sandbox preview</p>
     </div>
     <div className="glass-card p-5 space-y-4">
       <h4 className="text-sm font-semibold">Scan Results (Demo)</h4>
-      <FileResult name="invoice_final.docx" size="245 KB" status="phishing" details="Macro threat detected • Embedded links to malicious domain" hash="SHA256: a3f2...8d4e" />
-      <FileResult name="report.zip" size="1.2 MB" status="suspicious" details="Contains executable disguised as .pdf (report.pdf.exe)" hash="SHA256: b7c1...2f9a" />
-      <FileResult name="quarterly_summary.pdf" size="890 KB" status="safe" details="No threats detected • Clean PDF document" hash="SHA256: 9e0d...5c3b" />
+      <FileResult name="invoice_final.docx" size="245 KB" status="phishing" details="Macro threat detected • Embedded links to malicious domain" hash="SHA256: a3f2...8d4e" sandbox="Behavior: C2 beacon + credential exfil attempt" />
+      <FileResult name="report.zip" size="1.2 MB" status="suspicious" details="Contains executable disguised as .pdf (report.pdf.exe)" hash="SHA256: b7c1...2f9a" sandbox="Behavior: unsigned binary dropped in temp path" />
+      <FileResult name="quarterly_summary.pdf" size="890 KB" status="safe" details="No threats detected • Clean PDF document" hash="SHA256: 9e0d...5c3b" sandbox="Behavior: no runtime anomaly observed" />
     </div>
   </div>
 );
 
-const FileResult = ({ name, size, status, details, hash }: { name: string; size: string; status: string; details: string; hash: string }) => (
+const FileResult = ({
+  name,
+  size,
+  status,
+  details,
+  hash,
+  sandbox,
+}: {
+  name: string;
+  size: string;
+  status: string;
+  details: string;
+  hash: string;
+  sandbox: string;
+}) => (
   <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
     {status === "phishing" ? <FileWarning className="w-5 h-5 text-danger mt-0.5" /> : status === "suspicious" ? <ShieldAlert className="w-5 h-5 text-warning mt-0.5" /> : <CheckCircle className="w-5 h-5 text-success mt-0.5" />}
     <div className="flex-1 min-w-0">
@@ -240,6 +308,7 @@ const FileResult = ({ name, size, status, details, hash }: { name: string; size:
       </div>
       <p className={`text-xs ${status === "phishing" ? "text-danger" : status === "suspicious" ? "text-warning" : "text-success"}`}>{details}</p>
       <p className="text-[10px] text-muted-foreground font-mono mt-1">{hash}</p>
+      <p className="text-[10px] text-muted-foreground mt-1">Sandbox Preview: {sandbox}</p>
     </div>
     <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0 ${
       status === "phishing" ? "badge-phishing" : status === "suspicious" ? "badge-suspicious" : "badge-safe"
@@ -252,9 +321,9 @@ const ClassifyPanel = () => (
   <div className="space-y-5">
     <label className="text-sm font-medium mb-2 block">Message Classification System</label>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <ClassifyCard label="✅ Safe" color="success" desc="No threats detected. Content is legitimate and verified." confidence={12} />
-      <ClassifyCard label="⚠️ Suspicious" color="warning" desc="Potential indicators found. Manual review recommended." confidence={68} />
-      <ClassifyCard label="🚨 Phishing" color="danger" desc="High-confidence phishing detected. Block immediately." confidence={96} />
+      <ClassifyCard label="✅ Safe" tone="safe" desc="No threats detected. Content is legitimate and verified." confidence={12} />
+      <ClassifyCard label="⚠️ Suspicious" tone="suspicious" desc="Potential indicators found. Manual review recommended." confidence={68} />
+      <ClassifyCard label="🚨 Phishing" tone="phishing" desc="High-confidence phishing detected. Block immediately." confidence={96} />
     </div>
     <div className="glass-card p-5">
       <h4 className="text-sm font-semibold mb-3">Recent Classifications</h4>
@@ -278,16 +347,31 @@ const ClassifyPanel = () => (
   </div>
 );
 
-const ClassifyCard = ({ label, color, desc, confidence }: { label: string; color: string; desc: string; confidence: number }) => (
-  <div className={`glass-card p-5 border-${color}/20`}>
+const ClassifyCard = ({
+  label,
+  tone,
+  desc,
+  confidence,
+}: {
+  label: string;
+  tone: "safe" | "suspicious" | "phishing";
+  desc: string;
+  confidence: number;
+}) => {
+  const toneClass = tone === "safe" ? "bg-success" : tone === "suspicious" ? "bg-warning" : "bg-danger";
+  const ringClass = tone === "safe" ? "border-success/20" : tone === "suspicious" ? "border-warning/20" : "border-danger/20";
+
+  return (
+  <div className={`glass-card p-5 border ${ringClass}`}>
     <p className="text-lg font-bold mb-1">{label}</p>
     <p className="text-xs text-muted-foreground mb-4">{desc}</p>
     <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-      <div className={`h-full rounded-full bg-${color}`} style={{ width: `${confidence}%` }} />
+      <div className={`h-full rounded-full ${toneClass}`} style={{ width: `${confidence}%` }} />
     </div>
     <p className="text-xs text-muted-foreground mt-1.5 font-mono">Confidence: {confidence}%</p>
   </div>
-);
+  );
+};
 
 /* ===== RESULT CARD ===== */
 const ResultCard = ({ result, confidence }: { result: "phishing" | "safe" | "suspicious"; confidence: number }) => {
@@ -345,7 +429,22 @@ const ResultCard = ({ result, confidence }: { result: "phishing" | "safe" | "sus
 const InfoRow = ({ label, value, status }: { label: string; value: string; status?: string }) => (
   <div className="flex justify-between items-center py-1 border-b border-border/30 last:border-0">
     <span className="text-muted-foreground">{label}</span>
-    <span className={`font-mono ${status === "danger" ? "text-danger" : status === "warning" ? "text-warning" : ""}`}>{value}</span>
+    <span className={`font-mono ${status === "danger" ? "text-danger" : status === "warning" ? "text-warning" : status === "safe" ? "text-success" : ""}`}>{value}</span>
+  </div>
+);
+
+const InfoTile = ({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "warning";
+}) => (
+  <div className="rounded-lg bg-muted/30 border border-border/50 px-3 py-2.5">
+    <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
+    <p className={`text-xs font-mono ${tone === "warning" ? "text-warning" : "text-foreground"}`}>{value}</p>
   </div>
 );
 

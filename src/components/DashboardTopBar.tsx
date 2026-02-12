@@ -1,8 +1,8 @@
 import { Bell, ChevronDown, Activity } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo_obsidian_root.svg";
 
 const DashboardTopBar = () => (
-  <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card/30 backdrop-blur-md">
+  <header className="h-14 border-b border-border flex items-center justify-between px-6 bg-card/50 backdrop-blur-lg">
     <div className="flex items-center gap-4">
       <div className="md:hidden flex items-center gap-2">
         <img src={logo} alt="Phishing D&P" className="w-6 h-6 object-contain" />

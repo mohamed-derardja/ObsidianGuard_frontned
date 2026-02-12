@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Zap, Mail, Globe, FileSearch, ClipboardList, Settings,
   ChevronLeft, ChevronRight, Eye, Server
 } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo_obsidian_root.svg";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -29,8 +29,8 @@ const DashboardSidebar = () => {
       transition={{ duration: 0.2 }}
       className="hidden md:flex flex-col h-screen sticky top-0 bg-[hsl(var(--sidebar-background))] border-r border-border"
     >
-      <div className="h-16 flex items-center gap-2.5 px-4 border-b border-border">
-        <img src={logo} alt="Phishing D&P" className="w-8 h-8 object-contain flex-shrink-0" />
+      <div className="h-14 flex items-center gap-2 px-4 border-b border-border">
+        <img src={logo} alt="Phishing D&P" className="w-7 h-7 object-contain flex-shrink-0" />
         {!collapsed && <span className="font-bold text-sm">Phishing <span className="text-gradient">D&P</span></span>}
       </div>
 
