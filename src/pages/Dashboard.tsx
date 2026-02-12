@@ -65,15 +65,16 @@ const Dashboard = () => {
         <DashboardTopBar onMobileMenuToggle={() => setMobileOpen(true)} />
         <main id="main-content" role="main" className="flex-1 p-4 md:p-8 space-y-6 overflow-y-auto">
           <DashboardBreadcrumbs />
-          <div className="text-center max-w-2xl mx-auto pt-2">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 tracking-tight">Analysis <span className="text-gradient">Dashboard</span></h1>
-            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">Scan emails, URLs, screenshots & files for phishing threats in real-time</p>
-          </div>
 
           {isSettings ? (
             <ProfileSettings />
           ) : (
             <>
+              <div className="text-center max-w-2xl mx-auto pt-2">
+                <h1 className="text-3xl md:text-4xl font-bold mb-2 tracking-tight">Analysis <span className="text-gradient">Dashboard</span></h1>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">Scan emails, URLs, screenshots & files for phishing threats in real-time</p>
+              </div>
+
               {isOverview && (
                 <section aria-label="Role-Based Access Modules" className="space-y-3">
                   <div className="flex items-center justify-between">

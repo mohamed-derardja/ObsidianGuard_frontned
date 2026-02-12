@@ -1,6 +1,7 @@
 import { useRef, useCallback } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
 import { Sun, Moon } from "lucide-react";
 import RoleCards from "@/components/RoleCards";
@@ -527,9 +528,9 @@ const LandingFooter = () => (
         <span className="font-bold text-sm">Phishing D&P</span>
       </div>
       <div className="flex gap-6 text-xs text-muted-foreground">
-        <button className="hover:text-foreground transition-colors">Privacy Policy</button>
-        <button className="hover:text-foreground transition-colors">Terms of Service</button>
-        <button className="hover:text-foreground transition-colors">Security</button>
+        <button onClick={() => toast.info("Privacy Policy page coming soon.")} className="hover:text-foreground transition-colors">Privacy Policy</button>
+        <button onClick={() => toast.info("Terms of Service page coming soon.")} className="hover:text-foreground transition-colors">Terms of Service</button>
+        <button onClick={() => toast.info("Security page coming soon.")} className="hover:text-foreground transition-colors">Security</button>
       </div>
       <p className="text-xs text-muted-foreground">© 2026 Phishing Detect & Protect. All rights reserved.</p>
     </div>

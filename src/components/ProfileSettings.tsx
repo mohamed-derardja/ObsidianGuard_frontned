@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -6,6 +6,11 @@ import {
 } from "lucide-react";
 
 const ProfileSettings = () => {
+  const avatarRef = useRef<HTMLInputElement>(null);
+  const [avatarName, setAvatarName] = useState<string | null>(null);
+  const [twoFA, setTwoFA] = useState(false);
+  const [emailNotif, setEmailNotif] = useState(true);
+
   const [profile, setProfile] = useState({
     fullName: "Admin User",
     email: "admin@phishingdp.com",
@@ -46,10 +51,12 @@ const ProfileSettings = () => {
       >
         <div className="flex items-center gap-5">
           <div className="relative">
+            <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) { setAvatarName(e.target.files[0].name); toast.success(`Avatar updated: ${e.target.files[0].name}`); } }} />
             <div className="w-20 h-20 rounded-full bg-gradient-brand flex items-center justify-center text-2xl font-bold text-primary-foreground">
               {profile.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
             </div>
             <button
+              onClick={() => avatarRef.current?.click()}
               className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg hover:opacity-90 transition-opacity"
               aria-label="Change avatar"
             >
@@ -211,7 +218,14 @@ const ProfileSettings = () => {
               <p className="text-xs text-muted-foreground">Add an extra layer of security</p>
             </div>
           </div>
-          <span className="text-xs font-medium text-warning bg-warning/10 px-2.5 py-1 rounded-full">Disabled</span>
+          <button
+            onClick={() => { setTwoFA(!twoFA); toast.success(twoFA ? "2FA disabled." : "2FA enabled."); }}
+            className={`relative w-10 h-5.5 rounded-full transition-colors ${twoFA ? "bg-success" : "bg-muted"}`}
+            style={{ width: 40, height: 22 }}
+            aria-label="Toggle two-factor authentication"
+          >
+            <span className={`absolute top-0.5 left-0.5 w-[18px] h-[18px] rounded-full bg-white shadow transition-transform ${twoFA ? "translate-x-[18px]" : "translate-x-0"}`} />
+          </button>
         </div>
 
         <div className="flex items-center justify-between py-3">
@@ -224,7 +238,14 @@ const ProfileSettings = () => {
               <p className="text-xs text-muted-foreground">Receive alerts for suspicious activity</p>
             </div>
           </div>
-          <span className="text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">Enabled</span>
+          <button
+            onClick={() => { setEmailNotif(!emailNotif); toast.success(emailNotif ? "Notifications disabled." : "Notifications enabled."); }}
+            className={`relative rounded-full transition-colors ${emailNotif ? "bg-success" : "bg-muted"}`}
+            style={{ width: 40, height: 22 }}
+            aria-label="Toggle email notifications"
+          >
+            <span className={`absolute top-0.5 left-0.5 w-[18px] h-[18px] rounded-full bg-white shadow transition-transform ${emailNotif ? "translate-x-[18px]" : "translate-x-0"}`} />
+          </button>
         </div>
       </motion.div>
 

@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Mail,
@@ -118,7 +119,7 @@ const EmailPanel = () => {
         />
       </div>
       <div className="flex flex-wrap gap-3">
-        <button className="px-6 py-2.5 rounded-lg border border-border text-sm font-semibold hover:border-primary/30 hover:bg-primary/5 transition-all">
+        <button onClick={() => toast.info("File upload will connect to the backend API.")} className="px-6 py-2.5 rounded-lg border border-border text-sm font-semibold hover:border-primary/30 hover:bg-primary/5 transition-all">
           <Upload className="w-4 h-4 inline mr-2" />
           Upload .eml/.msg
         </button>
@@ -205,6 +206,9 @@ const UrlPanel = () => {
 
 /* ===== DOMAIN PANEL ===== */
 const DomainPanel = () => {
+  const [domain, setDomain] = useState("");
+  const [scanned, setScanned] = useState(false);
+
   const dnsQuality = [
     { label: "A", value: 100 },
     { label: "MX", value: 82 },
@@ -213,20 +217,26 @@ const DomainPanel = () => {
     { label: "DKIM", value: 22 },
   ];
 
+  const investigate = () => {
+    if (!domain.trim()) { toast.error("Please enter a domain name."); return; }
+    setScanned(true);
+    toast.success(`Investigating ${domain}...`);
+  };
+
   return (
     <div className="space-y-5">
       <div>
         <label className="text-sm font-medium mb-2 block">Enter domain name</label>
         <div className="flex gap-3">
-          <input placeholder="example.com" className="flex-1 bg-muted/40 border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 font-mono transition-all" />
-          <button className="px-5 py-2.5 bg-gradient-brand text-primary-foreground rounded-lg font-semibold text-sm whitespace-nowrap hover:opacity-90 transition-all">
+          <input value={domain} onChange={(e) => setDomain(e.target.value)} onKeyDown={(e) => e.key === "Enter" && investigate()} placeholder="example.com" className="flex-1 bg-muted/40 border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 font-mono transition-all" />
+          <button onClick={investigate} className="px-5 py-2.5 bg-gradient-brand text-primary-foreground rounded-lg font-semibold text-sm whitespace-nowrap hover:opacity-90 transition-all">
             <Globe className="w-4 h-4 inline mr-1" />
             Investigate
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {scanned && <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="glass-card p-5 space-y-3">
           <h4 className="font-semibold text-sm flex items-center gap-2"><Server className="w-4 h-4 text-primary" /> Domain Profile</h4>
           <InfoRow label="Registrar" value="GoDaddy LLC" />
@@ -250,52 +260,93 @@ const DomainPanel = () => {
             </div>
           ))}
         </div>
-      </div>
+      </div>}
+
+      {!scanned && (
+        <div className="glass-card p-8 text-center">
+          <Globe className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">Enter a domain above and click Investigate to see results</p>
+        </div>
+      )}
     </div>
   );
 };
 
 /* ===== VISUAL PANEL ===== */
-const VisualPanel = () => (
-  <div className="space-y-5">
-    <label className="text-sm font-medium mb-2 block">Analyze website screenshots for impersonation and visual fraud</label>
-    <div className="border-2 border-dashed border-border rounded-xl p-12 text-center hover:border-primary/30 transition-colors cursor-pointer group">
-      <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3 group-hover:text-primary transition-colors" />
-      <p className="text-sm text-muted-foreground">Drag & drop screenshot or click to upload</p>
-      <p className="text-xs text-muted-foreground/50 mt-1">PNG, JPG up to 10MB</p>
-    </div>
-    <div className="glass-card p-5 space-y-4">
-      <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0">
-          <Eye className="w-5 h-5 text-warning" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-medium mb-1">Detected: <span className="text-warning">97% visual similarity</span> with PayPal login page</p>
-          <p className="text-xs text-muted-foreground mb-3">Perceptual comparison with known legitimate websites flags likely brand impersonation.</p>
-          <div className="flex flex-wrap gap-2 text-xs">
-            <span className="badge-phishing px-2 py-1 rounded-md">Brand Impersonation</span>
-            <span className="badge-suspicious px-2 py-1 rounded-md">Modified Logo</span>
-            <span className="badge-phishing px-2 py-1 rounded-md">Fake Form Fields</span>
+const VisualPanel = () => {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploaded, setUploaded] = useState<string | null>(null);
+
+  const handleFile = (file: File) => {
+    if (!file.type.startsWith("image/")) { toast.error("Please upload an image file (PNG, JPG)."); return; }
+    setUploaded(file.name);
+    toast.success(`Analyzing ${file.name}...`);
+  };
+
+  return (
+    <div className="space-y-5">
+      <label className="text-sm font-medium mb-2 block">Analyze website screenshots for impersonation and visual fraud</label>
+      <div
+        onClick={() => fileRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-primary/40"); }}
+        onDragLeave={(e) => { e.currentTarget.classList.remove("border-primary/40"); }}
+        onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove("border-primary/40"); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }}
+        className="border-2 border-dashed border-border rounded-xl p-12 text-center hover:border-primary/30 transition-colors cursor-pointer group"
+      >
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
+        <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3 group-hover:text-primary transition-colors" />
+        <p className="text-sm text-muted-foreground">{uploaded ? `Uploaded: ${uploaded}` : "Drag & drop screenshot or click to upload"}</p>
+        <p className="text-xs text-muted-foreground/50 mt-1">PNG, JPG up to 10MB</p>
+      </div>
+      <div className="glass-card p-5 space-y-4">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0">
+            <Eye className="w-5 h-5 text-warning" />
           </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium mb-1">Detected: <span className="text-warning">97% visual similarity</span> with PayPal login page</p>
+            <p className="text-xs text-muted-foreground mb-3">Perceptual comparison with known legitimate websites flags likely brand impersonation.</p>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="badge-phishing px-2 py-1 rounded-md">Brand Impersonation</span>
+              <span className="badge-suspicious px-2 py-1 rounded-md">Modified Logo</span>
+              <span className="badge-phishing px-2 py-1 rounded-md">Fake Form Fields</span>
+            </div>
+          </div>
+          <span className="text-2xl font-bold font-mono text-warning">97%</span>
         </div>
-        <span className="text-2xl font-bold font-mono text-warning">97%</span>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-        <InfoTile label="Legitimate Brand" value="paypal.com" />
-        <InfoTile label="Detected Host" value="paypa1-secure.com" />
-        <InfoTile label="Visual Similarity Score" value="97 / 100" tone="warning" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <InfoTile label="Legitimate Brand" value="paypal.com" />
+          <InfoTile label="Detected Host" value="paypa1-secure.com" />
+          <InfoTile label="Visual Similarity Score" value="97 / 100" tone="warning" />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ===== FILE PANEL ===== */
-const FilePanel = () => (
+const FilePanel = () => {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploaded, setUploaded] = useState<string | null>(null);
+
+  const handleFile = (file: File) => {
+    setUploaded(file.name);
+    toast.success(`Scanning ${file.name}...`);
+  };
+
+  return (
   <div className="space-y-5">
     <label className="text-sm font-medium mb-2 block">Scan ZIP, PDF, and file attachments for malware behavior</label>
-    <div className="border-2 border-dashed border-border rounded-xl p-12 text-center hover:border-primary/30 transition-colors cursor-pointer group">
+    <div
+      onClick={() => fileRef.current?.click()}
+      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-primary/40"); }}
+      onDragLeave={(e) => { e.currentTarget.classList.remove("border-primary/40"); }}
+      onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove("border-primary/40"); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }}
+      className="border-2 border-dashed border-border rounded-xl p-12 text-center hover:border-primary/30 transition-colors cursor-pointer group"
+    >
+      <input ref={fileRef} type="file" accept=".zip,.pdf,.docx,.doc,.exe" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
       <FileSearch className="w-10 h-10 text-muted-foreground mx-auto mb-3 group-hover:text-primary transition-colors" />
-      <p className="text-sm text-muted-foreground">Drag & drop ZIP, PDF, DOCX files</p>
+      <p className="text-sm text-muted-foreground">{uploaded ? `Uploaded: ${uploaded}` : "Drag & drop ZIP, PDF, DOCX files"}</p>
       <p className="text-xs text-muted-foreground/50 mt-1">Malware detection + hash signature + sandbox preview</p>
     </div>
     <div className="glass-card p-5 space-y-4">
@@ -305,7 +356,8 @@ const FilePanel = () => (
       <FileResult name="quarterly_summary.pdf" size="890 KB" status="safe" details="No threats detected • Clean PDF document" hash="SHA256: 9e0d...5c3b" sandbox="Behavior: no runtime anomaly observed" />
     </div>
   </div>
-);
+  );
+};
 
 const FileResult = ({
   name,
@@ -440,7 +492,7 @@ const ResultCard = ({ result, confidence }: { result: "phishing" | "safe" | "sus
       </div>
 
       {result !== "safe" && (
-        <button className="px-5 py-2.5 bg-danger text-danger-foreground rounded-lg font-semibold text-sm whitespace-nowrap hover:opacity-90 transition-all">
+        <button onClick={() => toast.success("Threat blocked and reported successfully.")} className="px-5 py-2.5 bg-danger text-danger-foreground rounded-lg font-semibold text-sm whitespace-nowrap hover:opacity-90 transition-all">
           Block & Report
         </button>
       )}
