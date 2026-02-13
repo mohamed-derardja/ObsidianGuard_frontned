@@ -1,6 +1,6 @@
 // Base API configuration and utilities
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://obsidian-production-5918.up.railway.app';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://humble-cooperation-production.up.railway.app';
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
