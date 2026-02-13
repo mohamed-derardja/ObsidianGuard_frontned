@@ -10,6 +10,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import { AuthProvider } from "@/context/AuthContext";
+
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
 
 
 const Index = lazy(() => import("./pages/Index"));
@@ -55,17 +59,19 @@ const App = () => (
 
   <QueryClientProvider client={queryClient}>
 
-    <TooltipProvider>
+    <AuthProvider>
 
-      <Toaster />
+      <TooltipProvider>
 
-      <Sonner />
+        <Toaster />
 
-      <BrowserRouter>
+        <Sonner />
 
-        <Suspense fallback={<PageLoader />}>
+        <BrowserRouter>
 
-          <Routes>
+          <Suspense fallback={<PageLoader />}>
+
+            <Routes>
 
             <Route path="/" element={<Index />} />
 
@@ -75,26 +81,28 @@ const App = () => (
 
             <Route path="/forgot-password" element={<ForgotPassword />} />
 
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={<ProtectedRoute requiredRole="USER"><Dashboard /></ProtectedRoute>} />
 
-            <Route path="/dashboard/*" element={<Dashboard />} />
+            <Route path="/dashboard/*" element={<ProtectedRoute requiredRole="USER"><Dashboard /></ProtectedRoute>} />
 
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
 
-            <Route path="/enterprise" element={<EnterpriseDashboard />} />
+            <Route path="/enterprise" element={<ProtectedRoute requiredRole="ENTERPRISE"><EnterpriseDashboard /></ProtectedRoute>} />
 
-            <Route path="/enterprise/*" element={<EnterpriseDashboard />} />
+            <Route path="/enterprise/*" element={<ProtectedRoute requiredRole="ENTERPRISE"><EnterpriseDashboard /></ProtectedRoute>} />
 
-            <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<NotFound />} />
 
-          </Routes>
+            </Routes>
 
-        </Suspense>
+          </Suspense>
 
-      </BrowserRouter>
+        </BrowserRouter>
 
-    </TooltipProvider>
+      </TooltipProvider>
+
+    </AuthProvider>
 
   </QueryClientProvider>
 

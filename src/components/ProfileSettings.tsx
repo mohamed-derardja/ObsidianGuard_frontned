@@ -1,229 +1,295 @@
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import emailService from "@/services/email.service";
+import authService from "@/services/auth.service";
 import {
-  User, Mail, Phone, Building2, MapPin, Globe, Camera, Save, Shield, Key, Bell
+  Mail, Shield, Key, CheckCircle, Eye, EyeOff, Lock, RefreshCw,
 } from "lucide-react";
 
 const ProfileSettings = () => {
-  const avatarRef = useRef<HTMLInputElement>(null);
-  const [avatarName, setAvatarName] = useState<string | null>(null);
-  const [twoFA, setTwoFA] = useState(false);
-  const [emailNotif, setEmailNotif] = useState(true);
+  // Password state
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
-  const [profile, setProfile] = useState({
-    email: "admin@phishingdp.com",
-    phone: "+213 555 0123",
-    company: "Obsidian Guard",
-    role: "Security Analyst",
-    location: "Algiers, Algeria",
-  });
+  // Gmail state
+  const [gmailConnected, setGmailConnected] = useState(false);
+  const [gmailLoading, setGmailLoading] = useState(false);
+  const [checkingGmail, setCheckingGmail] = useState(true);
 
-  const [isLoading, setIsLoading] = useState(false);
+  useEffect(() => {
+    checkGmailStatus();
+  }, []);
 
-  const handleChange = (field: string, value: string) => {
-    setProfile((prev) => ({ ...prev, [field]: value }));
+  const checkGmailStatus = async () => {
+    setCheckingGmail(true);
+    try {
+      const status = await emailService.getGmailStatus();
+      setGmailConnected(status.connected);
+    } catch {
+      setGmailConnected(false);
+    } finally {
+      setCheckingGmail(false);
+    }
   };
 
-  const handleSave = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success("Profile updated successfully");
-    }, 1000);
+  const handleGmailConnect = async () => {
+    setGmailLoading(true);
+    try {
+      const authUrl = await emailService.getGmailAuthUrl();
+      if (authUrl && authUrl.startsWith("http")) {
+        window.location.href = authUrl;
+      } else {
+        toast.error("Invalid Gmail authorization URL");
+      }
+    } catch (error) {
+      toast.error("Failed to connect Gmail", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      setGmailLoading(false);
+    }
   };
+
+  const handleGmailDisconnect = async () => {
+    if (!confirm("Are you sure you want to disconnect Gmail?")) return;
+    setGmailLoading(true);
+    try {
+      await emailService.disconnectGmail();
+      setGmailConnected(false);
+      toast.success("Gmail disconnected successfully");
+    } catch (error) {
+      toast.error("Failed to disconnect Gmail", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      setGmailLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      toast.error("All fields are required");
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await authService.changePassword({ oldPassword, newPassword });
+      toast.success("Password changed successfully");
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || "Failed to change password");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const passwordStrength = (pw: string) => {
+    if (!pw) return { label: "", color: "", width: "0%" };
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    if (score <= 1) return { label: "Weak", color: "bg-danger", width: "25%" };
+    if (score === 2) return { label: "Fair", color: "bg-warning", width: "50%" };
+    if (score === 3) return { label: "Good", color: "bg-primary", width: "75%" };
+    return { label: "Strong", color: "bg-success", width: "100%" };
+  };
+
+  const strength = passwordStrength(newPassword);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-1">Profile Settings</h2>
-        <p className="text-sm text-muted-foreground">Manage your account information and preferences</p>
+        <h2 className="text-2xl font-bold mb-1">Settings</h2>
+        <p className="text-sm text-muted-foreground">Manage your password and integrations</p>
       </div>
 
-      {/* Avatar section */}
+      {/* ── Change Password ── */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-6"
+        className="glass-card p-6 space-y-5"
       >
-        <div className="flex items-center gap-5">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <Shield className="w-4 h-4 text-primary" />
+          Change Password
+        </h3>
+
+        {/* Current password */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">Current Password</label>
           <div className="relative">
-            <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) { setAvatarName(e.target.files[0].name); toast.success(`Avatar updated: ${e.target.files[0].name}`); } }} />
-            <div className="w-20 h-20 rounded-full bg-gradient-brand flex items-center justify-center text-2xl font-bold text-primary-foreground">
-              AU
-            </div>
+            <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+            <input
+              type={showOld ? "text" : "password"}
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+              placeholder="Enter current password"
+              className="w-full h-10 pl-9 pr-10 rounded-lg bg-muted/30 border border-primary/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+            />
             <button
-              onClick={() => avatarRef.current?.click()}
-              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg hover:opacity-90 transition-opacity"
-              aria-label="Change avatar"
+              type="button"
+              onClick={() => setShowOld(!showOld)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
             >
-              <Camera className="w-4 h-4" />
+              {showOld ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold">Admin User</h3>
-            <p className="text-sm text-muted-foreground">{profile.role}</p>
-            <p className="text-xs text-muted-foreground mt-1">{profile.email}</p>
-          </div>
         </div>
+
+        {/* New password */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">New Password</label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+            <input
+              type={showNew ? "text" : "password"}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+              className="w-full h-10 pl-9 pr-10 rounded-lg bg-muted/30 border border-primary/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setShowNew(!showNew)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
+            >
+              {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          {/* Strength meter */}
+          {newPassword && (
+            <div className="space-y-1 pt-1">
+              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${strength.color}`} style={{ width: strength.width }} />
+              </div>
+              <p className={`text-[10px] font-medium ${strength.color.replace("bg-", "text-")}`}>{strength.label}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Confirm password */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">Confirm New Password</label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+            <input
+              type={showConfirm ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+              className="w-full h-10 pl-9 pr-10 rounded-lg bg-muted/30 border border-primary/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors"
+            >
+              {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          {confirmPassword && confirmPassword !== newPassword && (
+            <p className="text-[10px] text-danger">Passwords do not match</p>
+          )}
+        </div>
+
+        <button
+          onClick={handleChangePassword}
+          disabled={changingPassword || !oldPassword || !newPassword || !confirmPassword}
+          className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {changingPassword ? (
+            <>
+              <RefreshCw className="w-4 h-4 animate-spin" /> Changing...
+            </>
+          ) : (
+            <>
+              <Key className="w-4 h-4" /> Change Password
+            </>
+          )}
+        </button>
       </motion.div>
 
-      {/* Personal Information */}
+      {/* ── Gmail Integration ── */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="glass-card p-6 space-y-5"
-      >
-        <h3 className="text-sm font-semibold flex items-center gap-2">
-          <User className="w-4 h-4 text-primary" />
-          Personal Information
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label htmlFor="email" className="text-xs font-medium text-muted-foreground">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <input
-                id="email"
-                type="email"
-                value={profile.email}
-                onChange={(e) => handleChange("email", e.target.value)}
-                className="w-full h-10 pl-9 pr-3 rounded-lg bg-muted/30 border border-primary/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="phone" className="text-xs font-medium text-muted-foreground">Phone Number</label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <input
-                id="phone"
-                type="tel"
-                value={profile.phone}
-                onChange={(e) => handleChange("phone", e.target.value)}
-                className="w-full h-10 pl-9 pr-3 rounded-lg bg-muted/30 border border-primary/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="location" className="text-xs font-medium text-muted-foreground">Location</label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <input
-                id="location"
-                value={profile.location}
-                onChange={(e) => handleChange("location", e.target.value)}
-                className="w-full h-10 pl-9 pr-3 rounded-lg bg-muted/30 border border-primary/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="company" className="text-xs font-medium text-muted-foreground">Company</label>
-            <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <input
-                id="company"
-                value={profile.company}
-                onChange={(e) => handleChange("company", e.target.value)}
-                className="w-full h-10 pl-9 pr-3 rounded-lg bg-muted/30 border border-primary/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-              />
-            </div>
-          </div>
-
-        </div>
-      </motion.div>
-
-      {/* Security section */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
         className="glass-card p-6 space-y-4"
       >
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <Shield className="w-4 h-4 text-primary" />
-          Security
+          <Mail className="w-4 h-4 text-primary" />
+          Gmail Integration
         </h3>
 
-        <div className="flex items-center justify-between py-3 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Key className="w-4 h-4 text-primary" />
+        <div className="flex items-center justify-between py-4">
+          <div className="flex items-center gap-3 flex-1">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${gmailConnected ? "bg-green-500/10" : "bg-primary/10"}`}>
+              {gmailConnected ? (
+                <CheckCircle className="w-4 h-4 text-green-500" />
+              ) : (
+                <Mail className="w-4 h-4 text-primary" />
+              )}
             </div>
-            <div>
-              <p className="text-sm font-medium">Password</p>
-              <p className="text-xs text-muted-foreground">Last changed 30 days ago</p>
+            <div className="flex-1">
+              <p className="text-sm font-medium">Gmail Account</p>
+              {checkingGmail ? (
+                <p className="text-xs text-muted-foreground">Checking connection...</p>
+              ) : gmailConnected ? (
+                <p className="text-xs text-green-500 font-medium">Connected — Emails sync automatically</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Connect your Gmail to sync and analyze emails</p>
+              )}
             </div>
           </div>
           <button
-            onClick={() => toast.info("Password change will be available soon.")}
-            className="text-xs text-primary font-medium hover:underline"
+            onClick={gmailConnected ? handleGmailDisconnect : handleGmailConnect}
+            disabled={gmailLoading || checkingGmail}
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all disabled:opacity-60 ${
+              gmailConnected
+                ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                : "bg-primary/10 text-primary hover:bg-primary/20"
+            }`}
           >
-            Change
+            {gmailLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                {gmailConnected ? "Disconnecting..." : "Connecting..."}
+              </div>
+            ) : gmailConnected ? (
+              "Disconnect"
+            ) : (
+              "Connect Gmail"
+            )}
           </button>
         </div>
 
-        <div className="flex items-center justify-between py-3 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Shield className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Two-Factor Authentication</p>
-              <p className="text-xs text-muted-foreground">Add an extra layer of security</p>
-            </div>
+        {gmailConnected && (
+          <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-4 space-y-2">
+            <p className="text-xs text-green-600 dark:text-green-400 font-medium">Gmail is connected</p>
+            <p className="text-xs text-muted-foreground">
+              Your Gmail account is securely connected. Sync emails and run phishing analysis in the Email Analyzer tab.
+            </p>
           </div>
-          <button
-            onClick={() => { setTwoFA(!twoFA); toast.success(twoFA ? "2FA disabled." : "2FA enabled."); }}
-            className={`relative w-10 h-5.5 rounded-full transition-colors ${twoFA ? "bg-success" : "bg-muted"}`}
-            style={{ width: 40, height: 22 }}
-            aria-label="Toggle two-factor authentication"
-          >
-            <span className={`absolute top-0.5 left-0.5 w-[18px] h-[18px] rounded-full bg-white shadow transition-transform ${twoFA ? "translate-x-[18px]" : "translate-x-0"}`} />
-          </button>
-        </div>
-
-        <div className="flex items-center justify-between py-3">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Bell className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Email Notifications</p>
-              <p className="text-xs text-muted-foreground">Receive alerts for suspicious activity</p>
-            </div>
-          </div>
-          <button
-            onClick={() => { setEmailNotif(!emailNotif); toast.success(emailNotif ? "Notifications disabled." : "Notifications enabled."); }}
-            className={`relative rounded-full transition-colors ${emailNotif ? "bg-success" : "bg-muted"}`}
-            style={{ width: 40, height: 22 }}
-            aria-label="Toggle email notifications"
-          >
-            <span className={`absolute top-0.5 left-0.5 w-[18px] h-[18px] rounded-full bg-white shadow transition-transform ${emailNotif ? "translate-x-[18px]" : "translate-x-0"}`} />
-          </button>
-        </div>
+        )}
       </motion.div>
-
-      {/* Save button */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-gradient-brand text-white font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-60 neon-glow"
-        >
-          {isLoading ? (
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <Save className="w-4 h-4" />
-          )}
-          Save Changes
-        </button>
-      </div>
     </div>
   );
 };

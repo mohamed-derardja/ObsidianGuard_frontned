@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -7,6 +7,14 @@ import {
   Building2, Zap, Globe, FileSearch, BarChart3, Headphones, Users, Key
 } from "lucide-react";
 import logo from "@/assets/logo_obsidian_root.svg";
+import { useAuth } from "@/context/AuthContext";
+import { ApiError } from "@/services/auth.service";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 
 type AccountType = "user" | "enterprise";
 
@@ -52,45 +60,186 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
-  // Enterprise-only fields
-  const [companyName, setCompanyName] = useState("");
+  // Email verification state
+  const [showVerification, setShowVerification] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const { register, verifyEmail, loginWithGoogle } = useAuth();
+  const navigate = useNavigate();
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  // Google Sign-In callback
+  const handleGoogleSuccess = useCallback(async (credential: string) => {
+    setIsGoogleLoading(true);
+    try {
+      const role = accountType === "user" ? "USER" : "ENTERPRISE";
+      await loginWithGoogle(credential, role);
+      const storedType = localStorage.getItem("accountType");
+      const isEnterprise = storedType === "enterprise";
+      toast.success("Signed up with Google", { description: `Redirecting to ${isEnterprise ? "enterprise " : ""}dashboard...` });
+      navigate(isEnterprise ? "/enterprise" : "/dashboard");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error("Google Sign-Up failed", { description: error.message });
+      } else {
+        toast.error("Google Sign-Up failed", { description: "An unexpected error occurred" });
+      }
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  }, [loginWithGoogle, navigate, accountType]);
+
+  const handleGoogleError = useCallback((error: Error) => {
+    toast.error("Google Sign-Up error", { description: error.message });
+  }, []);
+
+  const { buttonRef } = useGoogleAuth({
+    onSuccess: handleGoogleSuccess,
+    onError: handleGoogleError,
+    buttonConfig: { text: 'signup_with' },
+  });
 
   const passwordChecks = [
     { label: "At least 8 characters", met: password.length >= 8 },
     { label: "One uppercase letter", met: /[A-Z]/.test(password) },
     { label: "One number", met: /\d/.test(password) },
+    { label: "One special character", met: /[!@#$%^&*(),.?":{}|<>]/.test(password) },
     { label: "Passwords match", met: password.length > 0 && password === confirmPassword },
   ];
 
-  const navigate = useNavigate();
-
   const passwordStrength = passwordChecks.filter((c) => c.met).length;
-  const strengthLabel = passwordStrength <= 1 ? "Weak" : passwordStrength <= 2 ? "Fair" : passwordStrength <= 3 ? "Good" : "Strong";
+  const strengthLabel = passwordStrength <= 1 ? "Weak" : passwordStrength <= 2 ? "Fair" : passwordStrength <= 3 ? "Good" : passwordStrength <= 4 ? "Strong" : "Very Strong";
   const strengthColor = passwordStrength <= 1 ? "bg-danger" : passwordStrength <= 2 ? "bg-warning" : passwordStrength <= 3 ? "bg-info" : "bg-success";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreed) {
       toast.error("Please agree to the Terms of Service and Privacy Policy.");
       return;
     }
-    if (passwordStrength < 4) {
+    if (passwordStrength < 5) {
       toast.error("Please meet all password requirements before continuing.");
       return;
     }
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const role = accountType === "user" ? "USER" : "ENTERPRISE";
+      const result = await register(email, password, role);
+      setRegisteredEmail(result.email);
+      setShowVerification(true);
       localStorage.setItem("accountType", accountType);
-      toast.success("Account created successfully!", { description: "Welcome to Obsidian Guard." });
-      navigate(accountType === "enterprise" ? "/enterprise" : "/dashboard");
-    }, 1500);
+      toast.success("Account created!", { description: "Please check your email for verification code." });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error("Registration failed", { description: error.message });
+      } else {
+        toast.error("Registration failed", { description: "An unexpected error occurred" });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    if (verificationCode.length !== 6) {
+      toast.error("Please enter the 6-digit verification code");
+      return;
+    }
+    setIsVerifying(true);
+    try {
+      await verifyEmail(registeredEmail, verificationCode);
+      toast.success("Email verified!", { description: "Redirecting to login..." });
+      setTimeout(() => navigate("/login"), 1500);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error("Verification failed", { description: error.message });
+      } else {
+        toast.error("Verification failed", { description: "Invalid verification code" });
+      }
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const pack = accountType === "user" ? userPack : enterprisePack;
 
   return (
     <div className="min-h-screen bg-background flex relative overflow-hidden">
+      {/* Email Verification Modal */}
+      <AnimatePresence>
+        {showVerification && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md p-7 rounded-xl border border-border bg-card shadow-xl"
+            >
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Mail className="w-7 h-7 text-primary" />
+                </div>
+                <h2 className="text-xl font-bold mb-2">Verify your email</h2>
+                <p className="text-sm text-muted-foreground">
+                  We've sent a 6-digit code to <span className="font-medium text-foreground">{registeredEmail}</span>
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={verificationCode}
+                    onChange={setVerificationCode}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+
+                <button
+                  onClick={handleVerifyEmail}
+                  disabled={isVerifying || verificationCode.length !== 6}
+                  className="w-full h-11 rounded-lg bg-gradient-brand text-white font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-60 neon-glow"
+                >
+                  {isVerifying ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>Verify Email<CheckCircle className="w-4 h-4" /></>
+                  )}
+                </button>
+
+                <p className="text-center text-xs text-muted-foreground">
+                  Didn't receive the code?{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowVerification(false);
+                      toast.info("You can try registering again with the same email.");
+                    }}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Try again
+                  </button>
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Background effects */}
       <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{
         backgroundImage: "linear-gradient(hsl(190 85% 48%) 1px, transparent 1px), linear-gradient(90deg, hsl(190 85% 48%) 1px, transparent 1px)",
@@ -256,34 +405,6 @@ const Register = () => {
 
           {/* ─── Form ─── */}
           <form onSubmit={handleSubmit} className="p-7 rounded-xl border border-border bg-card/60 backdrop-blur-lg shadow-[0_0_40px_rgba(0,0,0,0.15)] space-y-4" noValidate>
-            {/* Company Name — enterprise only */}
-            <AnimatePresence>
-              {accountType === "enterprise" && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="space-y-2 overflow-hidden"
-                >
-                  <label htmlFor="companyName" className="text-sm font-medium text-foreground ml-1">
-                    Company name
-                  </label>
-                  <div className="relative group">
-                    <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/50 group-focus-within:text-primary transition-colors" />
-                    <input
-                      id="companyName"
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="Acme Inc."
-                      required
-                      className="w-full h-11 pl-10 pr-4 rounded-lg bg-muted/30 border border-primary/10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             {/* Email */}
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-foreground ml-1">
@@ -363,7 +484,7 @@ const Register = () => {
                     <span className={`text-xs font-medium ${passwordStrength <= 1 ? "text-danger" : passwordStrength <= 2 ? "text-warning" : passwordStrength <= 3 ? "text-info" : "text-success"}`}>{strengthLabel}</span>
                   </div>
                   <div className="flex gap-1">
-                    {[1, 2, 3, 4].map((step) => (
+                    {[1, 2, 3, 4, 5].map((step) => (
                       <div key={step} className={`h-1.5 flex-1 rounded-full transition-colors ${passwordStrength >= step ? strengthColor : "bg-muted"}`} />
                     ))}
                   </div>
@@ -421,19 +542,16 @@ const Register = () => {
           </div>
 
           {/* Social buttons */}
-          <div>
-            <button 
-              type="button"
-              onClick={() => {
-                localStorage.setItem("accountType", accountType);
-                toast.success("Google sign-up successful!", { description: "Redirecting to dashboard..." });
-                setTimeout(() => navigate(accountType === "enterprise" ? "/enterprise" : "/dashboard"), 1500);
-              }}
-              className="w-full h-12 rounded-lg bg-card border border-border text-foreground font-semibold text-sm flex items-center justify-center gap-3 hover:bg-muted transition-all shadow-sm hover:shadow-md"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
-              Continue with Google
-            </button>
+          <div className="relative">
+            {isGoogleLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg z-10">
+                <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+              </div>
+            )}
+            <div 
+              ref={buttonRef} 
+              className="w-full flex items-center justify-center [&>div]:w-full [&_iframe]:!w-full"
+            />
           </div>
 
           {/* Login link */}

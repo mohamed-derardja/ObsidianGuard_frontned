@@ -6,9 +6,9 @@ import { Link, useLocation } from "react-router-dom";
 
 import {
 
-  LayoutDashboard, Zap, Mail, Globe, FileSearch, ClipboardList, Settings,
+  LayoutDashboard, Zap, Mail, Globe, FileSearch, Settings,
 
-  ChevronLeft, ChevronRight, Eye, Server, X
+  ChevronLeft, ChevronRight, X
 
 } from "lucide-react";
 
@@ -24,13 +24,7 @@ const navItems = [
 
   { icon: Globe, label: "URL & Domain", path: "/dashboard/url" },
 
-  { icon: Server, label: "Domain Intel", path: "/dashboard/domain" },
-
-  { icon: Eye, label: "Visual Checker", path: "/dashboard/visual" },
-
   { icon: FileSearch, label: "File Scanner", path: "/dashboard/files" },
-
-  { icon: ClipboardList, label: "My Reports", path: "/dashboard/reports" },
 
   { icon: Settings, label: "Settings", path: "/dashboard/settings" },
 

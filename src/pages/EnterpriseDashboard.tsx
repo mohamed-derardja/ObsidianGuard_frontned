@@ -1,22 +1,28 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/context/AuthContext";
+import { companyService, Employee as ApiEmployee, CompanyProfile } from "@/services/company.service";
+import { ApiError } from "@/services/api";
 import {
   Users, UserPlus, Mail, Trash2, Globe, ShieldAlert, AlertTriangle,
   CheckCircle, Search, Download, Filter, Clock, Eye, Building2,
   LayoutDashboard, Settings, Sun, Moon, Menu, X, Bell, ChevronDown,
-  LogOut, User, ChevronLeft, ChevronRight, Shield
+  LogOut, User, ChevronLeft, ChevronRight, Shield, RefreshCw, Loader2
 } from "lucide-react";
 import logo from "@/assets/logo_obsidian_root.svg";
 
 /* ───── Types ───── */
 interface Employee {
-  id: number;
+  id: string;
   email: string;
-  addedAt: string;
-  status: "active" | "flagged" | "inactive";
+  status: "PENDING" | "ACCEPTED" | "REJECTED";
+  extensionInstalled: boolean;
+  invitedAt: string;
+  respondedAt?: string;
+  installedAt?: string;
 }
 
 interface ActivityLog {
@@ -29,22 +35,12 @@ interface ActivityLog {
 }
 
 /* ───── Demo data ───── */
-const initialEmployees: Employee[] = [
-  { id: 1, email: "ahmed.b@company.dz", addedAt: "2026-01-15", status: "active" },
-  { id: 2, email: "fatima.k@company.dz", addedAt: "2026-01-20", status: "flagged" },
-  { id: 3, email: "youcef.m@company.dz", addedAt: "2026-02-01", status: "active" },
-  { id: 4, email: "sara.d@company.dz", addedAt: "2026-02-05", status: "inactive" },
-];
-
 const activityLogs: ActivityLog[] = [
-  { id: 1, employeeEmail: "fatima.k@company.dz", type: "email", detail: "Opened phishing email from 'support@paypa1.com'", risk: "phishing", timestamp: "2 hours ago" },
-  { id: 2, employeeEmail: "ahmed.b@company.dz", type: "site", detail: "Visited https://secure-bank-login.xyz", risk: "phishing", timestamp: "3 hours ago" },
-  { id: 3, employeeEmail: "fatima.k@company.dz", type: "site", detail: "Visited https://bit.ly/3xR2kf (redirects to unknown)", risk: "suspicious", timestamp: "5 hours ago" },
-  { id: 4, employeeEmail: "youcef.m@company.dz", type: "email", detail: "Received email with suspicious attachment invoice.pdf.exe", risk: "suspicious", timestamp: "6 hours ago" },
-  { id: 5, employeeEmail: "ahmed.b@company.dz", type: "site", detail: "Visited https://mail.google.com", risk: "safe", timestamp: "8 hours ago" },
-  { id: 6, employeeEmail: "sara.d@company.dz", type: "email", detail: "Received newsletter from trusted sender", risk: "safe", timestamp: "1 day ago" },
-  { id: 7, employeeEmail: "fatima.k@company.dz", type: "email", detail: "Clicked link in 'Verify your account' email", risk: "phishing", timestamp: "1 day ago" },
-  { id: 8, employeeEmail: "youcef.m@company.dz", type: "site", detail: "Visited https://linkedin.com/feed", risk: "safe", timestamp: "1 day ago" },
+  { id: 1, employeeEmail: "employee@company.com", type: "email", detail: "Opened phishing email from 'support@paypa1.com'", risk: "phishing", timestamp: "2 hours ago" },
+  { id: 2, employeeEmail: "employee@company.com", type: "site", detail: "Visited https://secure-bank-login.xyz", risk: "phishing", timestamp: "3 hours ago" },
+  { id: 3, employeeEmail: "employee@company.com", type: "site", detail: "Visited https://bit.ly/3xR2kf (redirects to unknown)", risk: "suspicious", timestamp: "5 hours ago" },
+  { id: 4, employeeEmail: "employee@company.com", type: "email", detail: "Received email with suspicious attachment invoice.pdf.exe", risk: "suspicious", timestamp: "6 hours ago" },
+  { id: 5, employeeEmail: "employee@company.com", type: "site", detail: "Visited https://mail.google.com", risk: "safe", timestamp: "8 hours ago" },
 ];
 
 const riskConfig = {
@@ -128,6 +124,7 @@ const EnterpriseSidebar = ({ mobileOpen, onMobileClose }: { mobileOpen: boolean;
 /* ===== ENTERPRISE TOPBAR ===== */
 const EnterpriseTopBar = ({ onMobileMenuToggle }: { onMobileMenuToggle: () => void }) => {
   const { theme, toggleTheme } = useTheme();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
   const [showUser, setShowUser] = useState(false);
   const userRef = useRef<HTMLDivElement>(null);
@@ -141,7 +138,7 @@ const EnterpriseTopBar = ({ onMobileMenuToggle }: { onMobileMenuToggle: () => vo
   }, []);
 
   return (
-    <header className="h-14 border-b border-border flex items-center justify-between px-4 md:px-6 bg-card/50 backdrop-blur-lg">
+    <header className="h-14 border-b border-border flex items-center justify-between px-4 md:px-6 bg-card/50 backdrop-blur-lg sticky top-0 z-40">
       <div className="flex items-center gap-3">
         <button onClick={onMobileMenuToggle} className="md:hidden p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors" aria-label="Open navigation menu">
           <Menu className="w-5 h-5" />
@@ -161,7 +158,7 @@ const EnterpriseTopBar = ({ onMobileMenuToggle }: { onMobileMenuToggle: () => vo
             <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${showUser ? "rotate-180" : ""}`} />
           </button>
           {showUser && (
-            <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-card shadow-xl z-50 overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-card shadow-xl z-[100] overflow-hidden">
               <div className="px-4 py-3 border-b border-border">
                 <p className="text-sm font-semibold">Enterprise Admin</p>
                 <p className="text-xs text-muted-foreground">admin@company.dz</p>
@@ -173,7 +170,7 @@ const EnterpriseTopBar = ({ onMobileMenuToggle }: { onMobileMenuToggle: () => vo
                 </Link>
               </div>
               <div className="border-t border-border py-1">
-                <button onClick={() => { setShowUser(false); localStorage.removeItem("accountType"); toast.success("Signed out."); navigate("/login"); }} className="flex items-center gap-3 px-4 py-2.5 text-sm text-danger hover:bg-muted/50 transition-colors w-full">
+                <button onClick={async () => { setShowUser(false); await logout(); toast.success("Signed out."); navigate("/login"); }} className="flex items-center gap-3 px-4 py-2.5 text-sm text-danger hover:bg-muted/50 transition-colors w-full">
                   <LogOut className="w-4 h-4" />
                   Sign Out
                 </button>
@@ -187,12 +184,12 @@ const EnterpriseTopBar = ({ onMobileMenuToggle }: { onMobileMenuToggle: () => vo
 };
 
 /* ===== OVERVIEW PAGE ===== */
-const OverviewPage = ({ employees, logs }: { employees: Employee[]; logs: ActivityLog[] }) => {
+const OverviewPage = ({ employees, logs, isLoading }: { employees: Employee[]; logs: ActivityLog[]; isLoading: boolean }) => {
   const stats = {
     total: employees.length,
-    active: employees.filter((e) => e.status === "active").length,
-    flagged: employees.filter((e) => e.status === "flagged").length,
-    threats: logs.filter((l) => l.risk === "phishing").length,
+    accepted: employees.filter((e) => e.status === "ACCEPTED").length,
+    pending: employees.filter((e) => e.status === "PENDING").length,
+    extensionInstalled: employees.filter((e) => e.extensionInstalled).length,
   };
 
   return (
@@ -202,95 +199,136 @@ const OverviewPage = ({ employees, logs }: { employees: Employee[]; logs: Activi
         <p className="text-sm text-muted-foreground">Monitor your organization's security posture</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "Total Employees", value: stats.total, icon: Users, color: "text-primary" },
-          { label: "Active", value: stats.active, icon: CheckCircle, color: "text-success" },
-          { label: "Flagged", value: stats.flagged, icon: AlertTriangle, color: "text-warning" },
-          { label: "Threats Detected", value: stats.threats, icon: ShieldAlert, color: "text-danger" },
-        ].map((s) => (
-          <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <s.icon className={`w-4 h-4 ${s.color}`} />
-              <span className="text-xs text-muted-foreground">{s.label}</span>
-            </div>
-            <p className="text-2xl font-bold font-mono">{s.value}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Recent threats */}
-      <div className="glass-card p-6 space-y-4">
-        <h3 className="text-sm font-semibold flex items-center gap-2">
-          <ShieldAlert className="w-4 h-4 text-danger" />
-          Recent Threats
-        </h3>
-        <div className="space-y-2">
-          {logs.filter((l) => l.risk !== "safe").slice(0, 5).map((log) => {
-            const rc = riskConfig[log.risk];
-            return (
-              <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/20 border border-border/50">
-                <div className={`w-8 h-8 rounded-lg ${rc.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                  {log.type === "email" ? <Mail className={`w-4 h-4 ${rc.color}`} /> : <Globe className={`w-4 h-4 ${rc.color}`} />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-xs font-semibold">{log.employeeEmail}</p>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${rc.badge}`}>{rc.label}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{log.detail}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" />{log.timestamp}</p>
-                </div>
-              </div>
-            );
-          })}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: "Total Invited", value: stats.total, icon: Users, color: "text-primary" },
+              { label: "Accepted", value: stats.accepted, icon: CheckCircle, color: "text-success" },
+              { label: "Pending", value: stats.pending, icon: Clock, color: "text-warning" },
+              { label: "Extension Installed", value: stats.extensionInstalled, icon: Shield, color: "text-info" },
+            ].map((s) => (
+              <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <s.icon className={`w-4 h-4 ${s.color}`} />
+                  <span className="text-xs text-muted-foreground">{s.label}</span>
+                </div>
+                <p className="text-2xl font-bold font-mono">{s.value}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Recent threats */}
+          <div className="glass-card p-6 space-y-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-danger" />
+              Recent Threats
+            </h3>
+            <div className="space-y-2">
+              {logs.filter((l) => l.risk !== "safe").slice(0, 5).map((log) => {
+                const rc = riskConfig[log.risk];
+                return (
+                  <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/20 border border-border/50">
+                    <div className={`w-8 h-8 rounded-lg ${rc.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                      {log.type === "email" ? <Mail className={`w-4 h-4 ${rc.color}`} /> : <Globe className={`w-4 h-4 ${rc.color}`} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-xs font-semibold">{log.employeeEmail}</p>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${rc.badge}`}>{rc.label}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{log.detail}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" />{log.timestamp}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              {logs.filter((l) => l.risk !== "safe").length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">No recent threats detected</p>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
 
 /* ===== EMPLOYEES PAGE ===== */
-const EmployeesPage = ({ employees, setEmployees }: { employees: Employee[]; setEmployees: React.Dispatch<React.SetStateAction<Employee[]>> }) => {
+const EmployeesPage = ({ employees, onRefresh, isLoading }: { employees: Employee[]; onRefresh: () => void; isLoading: boolean }) => {
   const [newEmail, setNewEmail] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateEmail = (email: string) => {
     if (!email.trim()) return "Please enter an email address.";
     if (!/\S+@\S+\.\S+/.test(email)) return "Enter a valid email address.";
-    if (employees.some((e) => e.email.toLowerCase() === email.toLowerCase())) return "This employee is already added.";
+    if (employees.some((e) => e.email.toLowerCase() === email.toLowerCase())) return "This employee is already invited.";
     return "";
   };
 
-  const addEmployee = () => {
+  const inviteEmployee = async () => {
     const error = validateEmail(newEmail);
     if (error) {
       setEmailError(error);
       return;
     }
     setEmailError("");
-    const newEmployee: Employee = { 
-      id: Date.now(), 
-      email: newEmail.trim().toLowerCase(), 
-      addedAt: new Date().toISOString().split("T")[0], 
-      status: "active" 
-    };
-    setEmployees([...employees, newEmployee]);
-    toast.success(`${newEmail} added successfully.`);
-    setNewEmail("");
+    setIsSubmitting(true);
+    try {
+      await companyService.inviteEmployee({ email: newEmail.trim().toLowerCase() });
+      toast.success(`Invitation sent to ${newEmail}`);
+      setNewEmail("");
+      onRefresh();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error("Failed to invite employee", { description: err.message });
+      } else {
+        toast.error("Failed to invite employee");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const removeEmployee = (id: number) => {
+  const removeEmployee = async (id: string) => {
     const emp = employees.find((e) => e.id === id);
-    setEmployees(employees.filter((e) => e.id !== id));
-    setSelectedEmployees(selectedEmployees.filter(empId => empId !== id));
-    toast.success(`${emp?.email} removed.`);
+    try {
+      await companyService.deleteEmployee(id);
+      toast.success(`${emp?.email} removed.`);
+      setSelectedEmployees(selectedEmployees.filter(empId => empId !== id));
+      onRefresh();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error("Failed to remove employee", { description: err.message });
+      } else {
+        toast.error("Failed to remove employee");
+      }
+    }
   };
 
-  const toggleEmployeeSelection = (id: number) => {
+  const resendInvitation = async (id: string) => {
+    const emp = employees.find((e) => e.id === id);
+    try {
+      await companyService.resendInvitation(id);
+      toast.success(`Invitation resent to ${emp?.email}`);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error("Failed to resend invitation", { description: err.message });
+      } else {
+        toast.error("Failed to resend invitation");
+      }
+    }
+  };
+
+  const toggleEmployeeSelection = (id: string) => {
     setSelectedEmployees(prev => 
       prev.includes(id) 
         ? prev.filter(empId => empId !== id)
@@ -306,26 +344,23 @@ const EmployeesPage = ({ employees, setEmployees }: { employees: Employee[]; set
     }
   };
 
-  const bulkRemoveEmployees = () => {
+  const bulkRemoveEmployees = async () => {
     const employeesToRemove = employees.filter(emp => selectedEmployees.includes(emp.id));
-    setEmployees(employees.filter(emp => !selectedEmployees.includes(emp.id)));
-    setSelectedEmployees([]);
-    toast.success(`${employeesToRemove.length} employee(s) removed.`);
-  };
-
-  const bulkUpdateStatus = (status: Employee['status']) => {
-    const employeesToUpdate = employees.filter(emp => selectedEmployees.includes(emp.id));
-    setEmployees(employees.map(emp => 
-      selectedEmployees.includes(emp.id) ? { ...emp, status } : emp
-    ));
-    setSelectedEmployees([]);
-    toast.success(`${employeesToUpdate.length} employee(s) updated to ${status}.`);
+    try {
+      await Promise.all(selectedEmployees.map(id => companyService.deleteEmployee(id)));
+      toast.success(`${employeesToRemove.length} employee(s) removed.`);
+      setSelectedEmployees([]);
+      onRefresh();
+    } catch (err) {
+      toast.error("Failed to remove some employees");
+      onRefresh();
+    }
   };
 
   const exportEmployees = () => {
     const csvContent = [
-      "Email,Status,Added At",
-      ...filteredEmployees.map(emp => `${emp.email},${emp.status},${emp.addedAt}`)
+      "Email,Status,Invited At,Extension Installed",
+      ...filteredEmployees.map(emp => `${emp.email},${emp.status},${emp.invitedAt},${emp.extensionInstalled}`)
     ].join("\n");
     
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -341,17 +376,17 @@ const EmployeesPage = ({ employees, setEmployees }: { employees: Employee[]; set
     toast.success("Employee list exported successfully.");
   };
 
-  const updateEmployeeStatus = (id: number, status: Employee['status']) => {
-    setEmployees(employees.map(emp => 
-      emp.id === id ? { ...emp, status } : emp
-    ));
-    const emp = employees.find(e => e.id === id);
-    toast.success(`${emp?.email} status updated to ${status}.`);
-  };
-
   const filteredEmployees = employees.filter(emp => 
     emp.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const getStatusConfig = (status: Employee['status']) => {
+    switch (status) {
+      case "ACCEPTED": return { color: "text-success", bg: "bg-success/10", label: "Accepted" };
+      case "PENDING": return { color: "text-warning", bg: "bg-warning/10", label: "Pending" };
+      case "REJECTED": return { color: "text-danger", bg: "bg-danger/10", label: "Rejected" };
+    }
+  };
 
   // Clear bulk actions if no employees selected
   React.useEffect(() => {
@@ -360,16 +395,26 @@ const EmployeesPage = ({ employees, setEmployees }: { employees: Employee[]; set
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-1">Manage <span className="text-gradient">Employees</span></h2>
-        <p className="text-sm text-muted-foreground">Add employee emails to monitor their activity and receive threat reports</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold mb-1">Manage <span className="text-gradient">Employees</span></h2>
+          <p className="text-sm text-muted-foreground">Invite employees to monitor their activity and receive threat reports</p>
+        </div>
+        <button 
+          onClick={onRefresh} 
+          disabled={isLoading}
+          className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors disabled:opacity-50"
+          aria-label="Refresh employees"
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
-      {/* Add employee */}
+      {/* Invite employee */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 space-y-4">
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <UserPlus className="w-4 h-4 text-primary" />
-          Add Employee Email
+          Invite Employee
         </h3>
         <div className="space-y-3">
           <div className="flex gap-3">
@@ -381,18 +426,23 @@ const EmployeesPage = ({ employees, setEmployees }: { employees: Employee[]; set
                   setNewEmail(e.target.value);
                   setEmailError("");
                 }}
-                onKeyDown={(e) => e.key === "Enter" && addEmployee()}
-                placeholder="employee@company.dz"
-                className={`w-full h-10 pl-9 pr-3 rounded-lg bg-muted/30 border text-sm focus:outline-none focus:ring-2 transition-all ${
+                onKeyDown={(e) => e.key === "Enter" && !isSubmitting && inviteEmployee()}
+                placeholder="employee@company.com"
+                disabled={isSubmitting}
+                className={`w-full h-10 pl-9 pr-3 rounded-lg bg-muted/30 border text-sm focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                   emailError 
                     ? "border-danger/50 focus:ring-danger/50 focus:border-danger/50" 
                     : "border-primary/10 focus:ring-primary/50 focus:border-primary/50"
                 }`}
               />
             </div>
-            <button onClick={addEmployee} className="px-5 py-2.5 bg-gradient-brand text-white rounded-lg font-semibold text-sm whitespace-nowrap hover:opacity-90 transition-all">
-              <UserPlus className="w-4 h-4 inline mr-1.5" />
-              Add
+            <button 
+              onClick={inviteEmployee} 
+              disabled={isSubmitting}
+              className="px-5 py-2.5 bg-gradient-brand text-white rounded-lg font-semibold text-sm whitespace-nowrap hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+              Invite
             </button>
           </div>
           {emailError && (
@@ -447,31 +497,6 @@ const EmployeesPage = ({ employees, setEmployees }: { employees: Employee[]; set
               <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border/50">
                 <span className="text-xs text-muted-foreground font-medium">Bulk Actions:</span>
                 
-                {/* Status updates */}
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => bulkUpdateStatus("active")}
-                    className="px-2 py-1 rounded bg-success/10 text-success text-xs font-medium hover:bg-success/20 transition-colors"
-                  >
-                    Set Active
-                  </button>
-                  <button
-                    onClick={() => bulkUpdateStatus("flagged")}
-                    className="px-2 py-1 rounded bg-warning/10 text-warning text-xs font-medium hover:bg-warning/20 transition-colors"
-                  >
-                    Set Flagged
-                  </button>
-                  <button
-                    onClick={() => bulkUpdateStatus("inactive")}
-                    className="px-2 py-1 rounded bg-muted/70 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors"
-                  >
-                    Set Inactive
-                  </button>
-                </div>
-                
-                <div className="w-px h-4 bg-border" />
-                
-                {/* Other actions */}
                 <button
                   onClick={exportEmployees}
                   className="px-2 py-1 rounded bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
@@ -492,91 +517,113 @@ const EmployeesPage = ({ employees, setEmployees }: { employees: Employee[]; set
           )}
         </AnimatePresence>
 
-        {/* Employee list with selection */}
-        <div className="space-y-2">
-          {filteredEmployees.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground border-b border-border/30">
-              <input
-                type="checkbox"
-                checked={selectedEmployees.length === filteredEmployees.length && filteredEmployees.length > 0}
-                onChange={selectAllEmployees}
-                className="w-3 h-3 rounded border-border bg-muted/50 text-primary focus:ring-primary/40 accent-primary"
-              />
-              <span>Select All</span>
-            </div>
-          )}
-          
-          <AnimatePresence>
-            {filteredEmployees.map((emp) => (
-              <motion.div
-                key={emp.id}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
-                  selectedEmployees.includes(emp.id) 
-                    ? "bg-primary/5 border-primary/30" 
-                    : "bg-muted/20 border-border/50 hover:bg-muted/30"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedEmployees.includes(emp.id)}
-                    onChange={() => toggleEmployeeSelection(emp.id)}
-                    className="w-3 h-3 rounded border-border bg-muted/50 text-primary focus:ring-primary/40 accent-primary"
-                  />
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${
-                    emp.status === "flagged" ? "bg-warning/10 text-warning" : emp.status === "active" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
-                  }`}>
-                    {emp.email[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{emp.email}</p>
-                    <p className="text-[10px] text-muted-foreground">Added {emp.addedAt}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* Status dropdown */}
-                  <select
-                    value={emp.status}
-                    onChange={(e) => updateEmployeeStatus(emp.id, e.target.value as Employee['status'])}
-                    className="text-[10px] font-bold px-2 py-1 rounded-full border-0 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50"
+        {/* Loading state */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          /* Employee list with selection */
+          <div className="space-y-2">
+            {filteredEmployees.length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground border-b border-border/30">
+                <input
+                  type="checkbox"
+                  checked={selectedEmployees.length === filteredEmployees.length && filteredEmployees.length > 0}
+                  onChange={selectAllEmployees}
+                  className="w-3 h-3 rounded border-border bg-muted/50 text-primary focus:ring-primary/40 accent-primary"
+                />
+                <span>Select All</span>
+              </div>
+            )}
+            
+            <AnimatePresence>
+              {filteredEmployees.map((emp) => {
+                const statusConfig = getStatusConfig(emp.status);
+                return (
+                  <motion.div
+                    key={emp.id}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                      selectedEmployees.includes(emp.id) 
+                        ? "bg-primary/5 border-primary/30" 
+                        : "bg-muted/20 border-border/50 hover:bg-muted/30"
+                    }`}
                   >
-                    <option value="active" className="bg-background">Active</option>
-                    <option value="flagged" className="bg-background">Flagged</option>
-                    <option value="inactive" className="bg-background">Inactive</option>
-                  </select>
-                  
-                  {/* Remove button */}
-                  <button 
-                    onClick={() => removeEmployee(emp.id)} 
-                    className="p-1.5 rounded-lg hover:bg-danger/10 text-muted-foreground hover:text-danger transition-colors" 
-                    aria-label={`Remove ${emp.email}`}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          
-          {filteredEmployees.length === 0 && (
-            <div className="text-center py-8">
-              {searchQuery ? (
-                <>
-                  <Search className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No employees found matching "{searchQuery}"</p>
-                </>
-              ) : (
-                <>
-                  <Users className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No employees added yet</p>
-                </>
-              )}
-            </div>
-          )}
-        </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedEmployees.includes(emp.id)}
+                        onChange={() => toggleEmployeeSelection(emp.id)}
+                        className="w-3 h-3 rounded border-border bg-muted/50 text-primary focus:ring-primary/40 accent-primary"
+                      />
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${statusConfig.bg} ${statusConfig.color}`}>
+                        {emp.email[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{emp.email}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[10px] text-muted-foreground">Invited {new Date(emp.invitedAt).toLocaleDateString()}</p>
+                          {emp.extensionInstalled && (
+                            <span className="text-[10px] text-success flex items-center gap-0.5">
+                              <Shield className="w-3 h-3" /> Extension installed
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/* Status badge */}
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${statusConfig.bg} ${statusConfig.color}`}>
+                        {statusConfig.label}
+                      </span>
+                      
+                      {/* Resend invitation button for pending */}
+                      {emp.status === "PENDING" && (
+                        <button 
+                          onClick={() => resendInvitation(emp.id)} 
+                          className="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors" 
+                          aria-label={`Resend invitation to ${emp.email}`}
+                          title="Resend invitation"
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      
+                      {/* Remove button */}
+                      <button 
+                        onClick={() => removeEmployee(emp.id)} 
+                        className="p-1.5 rounded-lg hover:bg-danger/10 text-muted-foreground hover:text-danger transition-colors" 
+                        aria-label={`Remove ${emp.email}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+            
+            {filteredEmployees.length === 0 && (
+              <div className="text-center py-8">
+                {searchQuery ? (
+                  <>
+                    <Search className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No employees found matching "{searchQuery}"</p>
+                  </>
+                ) : (
+                  <>
+                    <Users className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No employees invited yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">Invite employees to start monitoring their security</p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </motion.div>
     </div>
   );
@@ -727,7 +774,28 @@ const EnterpriseDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchEmployees = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await companyService.getProfile();
+      if (response.success && response.data) {
+        setEmployees(response.data.employees || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch employees:", err);
+      toast.error("Failed to load employee data");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch employees on mount
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
 
   // Route guard: redirect non-enterprise users
   useEffect(() => {
@@ -747,13 +815,13 @@ const EnterpriseDashboard = () => {
         <EnterpriseTopBar onMobileMenuToggle={() => setMobileOpen(true)} />
         <main className="flex-1 p-4 md:p-8 space-y-6 overflow-y-auto">
           {page === "/enterprise/employees" ? (
-            <EmployeesPage employees={employees} setEmployees={setEmployees} />
+            <EmployeesPage employees={employees} onRefresh={fetchEmployees} isLoading={isLoading} />
           ) : page === "/enterprise/reports" ? (
             <ReportsPage logs={activityLogs} />
           ) : page === "/enterprise/settings" ? (
             <EnterpriseSettings />
           ) : (
-            <OverviewPage employees={employees} logs={activityLogs} />
+            <OverviewPage employees={employees} logs={activityLogs} isLoading={isLoading} />
           )}
         </main>
       </div>
