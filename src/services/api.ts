@@ -1,6 +1,6 @@
 // Base API configuration and utilities
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://humble-cooperation-production.up.railway.app';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
