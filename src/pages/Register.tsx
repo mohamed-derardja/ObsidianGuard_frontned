@@ -92,7 +92,7 @@ const Register = () => {
   return (
     <div className="min-h-screen bg-background flex relative overflow-hidden">
       {/* Background effects */}
-      <div className="absolute inset-0 opacity-[0.015]" style={{
+      <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{
         backgroundImage: "linear-gradient(hsl(190 85% 48%) 1px, transparent 1px), linear-gradient(90deg, hsl(190 85% 48%) 1px, transparent 1px)",
         backgroundSize: "50px 50px"
       }} />
@@ -425,8 +425,9 @@ const Register = () => {
             <button 
               type="button"
               onClick={() => {
+                localStorage.setItem("accountType", accountType);
                 toast.success("Google sign-up successful!", { description: "Redirecting to dashboard..." });
-                setTimeout(() => navigate("/dashboard"), 1500);
+                setTimeout(() => navigate(accountType === "enterprise" ? "/enterprise" : "/dashboard"), 1500);
               }}
               className="w-full h-12 rounded-lg bg-card border border-border text-foreground font-semibold text-sm flex items-center justify-center gap-3 hover:bg-muted transition-all shadow-sm hover:shadow-md"
             >
