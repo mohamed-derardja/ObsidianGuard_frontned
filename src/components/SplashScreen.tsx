@@ -150,7 +150,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
                 <div className="absolute inset-0 flex items-center justify-center" style={{ transform: 'translateZ(0)' }}>
                    {/* Logo Glow Backing */}
                    <div className="absolute w-28 h-28 bg-primary/15 rounded-full blur-xl animate-pulse" />
-                   <img src={logo} alt="Logo" className="w-36 h-36 object-contain drop-shadow-[0_0_30px_rgba(56,189,248,0.6)] animate-pulse relative z-10" />
+                   <img src={logo} alt="Logo" className="w-48 h-48 object-contain drop-shadow-[0_0_40px_rgba(56,189,248,0.6)] animate-pulse relative z-10" />
                 </div>
               </div>
             </motion.div>
@@ -163,7 +163,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
               className="text-center mb-10"
             >
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/50">
-                Phishing Detect & Protect
+                Obsidian Guard
               </h1>
               <p className="text-sm text-white/25 uppercase tracking-[0.4em] font-medium">Cyber Threat Intelligence</p>
             </motion.div>

@@ -47,8 +47,8 @@ const ForgotPassword = () => {
       >
         <div className="mb-8">
           <Link to="/" className="flex items-center gap-2.5 mb-6">
-            <img src={logo} alt="Phishing Detect & Protect" className="w-9 h-9 object-contain" />
-            <span className="text-lg font-bold">Phishing <span className="text-gradient">D&P</span></span>
+            <img src={logo} alt="Obsidian Guard" className="w-12 h-12 object-contain" />
+            <span className="text-lg font-bold">Obsidian <span className="text-gradient">Guard</span></span>
           </Link>
           <h1 className="text-2xl font-bold mb-2">Reset your password</h1>
           <p className="text-muted-foreground text-sm">

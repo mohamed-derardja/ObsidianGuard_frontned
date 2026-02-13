@@ -63,8 +63,8 @@ const Login = () => {
           </Link>
 
           <Link to="/" className="flex items-center gap-3 mb-10">
-            <img src={logo} alt="Phishing Detect & Protect" className="w-10 h-10 object-contain" />
-            <span className="text-xl font-bold">Phishing <span className="text-gradient">D&P</span></span>
+            <img src={logo} alt="Obsidian Guard" className="w-14 h-14 object-contain" />
+            <span className="text-xl font-bold">Obsidian <span className="text-gradient">Guard</span></span>
           </Link>
 
           <h2 className="text-3xl font-bold mb-4">
@@ -107,8 +107,8 @@ const Login = () => {
                 Back to home
               </Link>
               <Link to="/" className="flex items-center gap-2.5">
-                <img src={logo} alt="Phishing Detect & Protect" className="w-9 h-9 object-contain" />
-                <span className="text-lg font-bold">Phishing <span className="text-gradient">D&P</span></span>
+                <img src={logo} alt="Obsidian Guard" className="w-12 h-12 object-contain" />
+                <span className="text-lg font-bold">Obsidian <span className="text-gradient">Guard</span></span>
               </Link>
             </div>
             <h1 className="text-2xl font-bold mb-2">Welcome back</h1>

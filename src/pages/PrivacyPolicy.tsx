@@ -100,8 +100,8 @@ const PrivacyPolicy = () => (
     <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-50">
       <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src={logo} alt="Phishing D&P" className="w-7 h-7 object-contain" />
-          <span className="font-bold text-sm">Phishing <span className="text-gradient">D&P</span></span>
+          <img src={logo} alt="Obsidian Guard" className="w-10 h-10 object-contain" />
+          <span className="font-bold text-sm">Obsidian <span className="text-gradient">Guard</span></span>
         </Link>
         <Link to="/" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4" />
@@ -121,7 +121,7 @@ const PrivacyPolicy = () => (
           <h1 className="text-3xl md:text-4xl font-bold">Privacy <span className="text-gradient">Policy</span></h1>
           <p className="text-sm text-muted-foreground">Last updated: {lastUpdated}</p>
           <p className="text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            At Phishing D&P, we are committed to protecting your privacy and ensuring the security of your data. 
+            At Obsidian Guard, we are committed to protecting your privacy and ensuring the security of your data. 
             This policy explains how we collect, use, and safeguard your information when you use our phishing detection and analysis platform.
           </p>
         </div>

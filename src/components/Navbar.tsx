@@ -13,9 +13,9 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src={logo} alt="Phishing Detect & Protect" className="w-8 h-8 object-contain" />
+          <img src={logo} alt="Obsidian Guard" className="w-12 h-12 object-contain" />
           <span className="text-lg font-bold tracking-tight">
-            Phishing <span className="text-gradient">D&P</span>
+            Obsidian <span className="text-gradient">Guard</span>
           </span>
         </Link>
 

@@ -64,9 +64,9 @@ const DashboardSidebar = ({ mobileOpen = false, onMobileClose }: DashboardSideba
 
         <div className="flex items-center gap-2">
 
-          <img src={logo} alt="Phishing D&P" className="w-7 h-7 object-contain flex-shrink-0" />
+          <img src={logo} alt="Obsidian Guard" className="w-10 h-10 object-contain flex-shrink-0" />
 
-          {(isMobile || !collapsed) && <span className="font-bold text-sm">Phishing <span className="text-gradient">D&P</span></span>}
+          {(isMobile || !collapsed) && <span className="font-bold text-sm">Obsidian <span className="text-gradient">Guard</span></span>}
 
         </div>
 

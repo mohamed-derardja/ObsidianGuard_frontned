@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -69,9 +69,9 @@ const EnterpriseSidebar = ({ mobileOpen, onMobileClose }: { mobileOpen: boolean;
   const content = (isMobile: boolean) => (
     <>
       <div className="h-14 flex items-center justify-between gap-2 px-4 border-b border-border">
-        <Link to="/" className="flex items-center gap-2">
-          <img src={logo} alt="Phishing D&P" className="w-7 h-7 object-contain flex-shrink-0" />
-          {(isMobile || !collapsed) && <span className="font-bold text-sm">Enterprise <span className="text-gradient">D&P</span></span>}
+        <Link to="/" className="flex items-center gap-2.5">
+          <img src={logo} alt="Obsidian Guard" className="w-10 h-10 object-contain flex-shrink-0" />
+          <span className="font-bold text-sm">Obsidian <span className="text-gradient">Guard</span></span>
         </Link>
         {isMobile && (
           <button onClick={onMobileClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors" aria-label="Close navigation">
@@ -253,12 +253,32 @@ const OverviewPage = ({ employees, logs }: { employees: Employee[]; logs: Activi
 /* ===== EMPLOYEES PAGE ===== */
 const EmployeesPage = ({ employees, setEmployees }: { employees: Employee[]; setEmployees: React.Dispatch<React.SetStateAction<Employee[]>> }) => {
   const [newEmail, setNewEmail] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [emailError, setEmailError] = useState("");
+
+  const validateEmail = (email: string) => {
+    if (!email.trim()) return "Please enter an email address.";
+    if (!/\S+@\S+\.\S+/.test(email)) return "Enter a valid email address.";
+    if (employees.some((e) => e.email.toLowerCase() === email.toLowerCase())) return "This employee is already added.";
+    return "";
+  };
 
   const addEmployee = () => {
-    if (!newEmail.trim()) { toast.error("Please enter an email address."); return; }
-    if (!/\S+@\S+\.\S+/.test(newEmail)) { toast.error("Enter a valid email address."); return; }
-    if (employees.some((e) => e.email === newEmail)) { toast.error("This employee is already added."); return; }
-    setEmployees([...employees, { id: Date.now(), email: newEmail, addedAt: new Date().toISOString().split("T")[0], status: "active" }]);
+    const error = validateEmail(newEmail);
+    if (error) {
+      setEmailError(error);
+      return;
+    }
+    setEmailError("");
+    const newEmployee: Employee = { 
+      id: Date.now(), 
+      email: newEmail.trim().toLowerCase(), 
+      addedAt: new Date().toISOString().split("T")[0], 
+      status: "active" 
+    };
+    setEmployees([...employees, newEmployee]);
     toast.success(`${newEmail} added successfully.`);
     setNewEmail("");
   };
@@ -266,8 +286,77 @@ const EmployeesPage = ({ employees, setEmployees }: { employees: Employee[]; set
   const removeEmployee = (id: number) => {
     const emp = employees.find((e) => e.id === id);
     setEmployees(employees.filter((e) => e.id !== id));
+    setSelectedEmployees(selectedEmployees.filter(empId => empId !== id));
     toast.success(`${emp?.email} removed.`);
   };
+
+  const toggleEmployeeSelection = (id: number) => {
+    setSelectedEmployees(prev => 
+      prev.includes(id) 
+        ? prev.filter(empId => empId !== id)
+        : [...prev, id]
+    );
+  };
+
+  const selectAllEmployees = () => {
+    if (selectedEmployees.length === filteredEmployees.length) {
+      setSelectedEmployees([]);
+    } else {
+      setSelectedEmployees(filteredEmployees.map(emp => emp.id));
+    }
+  };
+
+  const bulkRemoveEmployees = () => {
+    const employeesToRemove = employees.filter(emp => selectedEmployees.includes(emp.id));
+    setEmployees(employees.filter(emp => !selectedEmployees.includes(emp.id)));
+    setSelectedEmployees([]);
+    toast.success(`${employeesToRemove.length} employee(s) removed.`);
+  };
+
+  const bulkUpdateStatus = (status: Employee['status']) => {
+    const employeesToUpdate = employees.filter(emp => selectedEmployees.includes(emp.id));
+    setEmployees(employees.map(emp => 
+      selectedEmployees.includes(emp.id) ? { ...emp, status } : emp
+    ));
+    setSelectedEmployees([]);
+    toast.success(`${employeesToUpdate.length} employee(s) updated to ${status}.`);
+  };
+
+  const exportEmployees = () => {
+    const csvContent = [
+      "Email,Status,Added At",
+      ...filteredEmployees.map(emp => `${emp.email},${emp.status},${emp.addedAt}`)
+    ].join("\n");
+    
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `employees_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    toast.success("Employee list exported successfully.");
+  };
+
+  const updateEmployeeStatus = (id: number, status: Employee['status']) => {
+    setEmployees(employees.map(emp => 
+      emp.id === id ? { ...emp, status } : emp
+    ));
+    const emp = employees.find(e => e.id === id);
+    toast.success(`${emp?.email} status updated to ${status}.`);
+  };
+
+  const filteredEmployees = employees.filter(emp => 
+    emp.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Clear bulk actions if no employees selected
+  React.useEffect(() => {
+    setShowBulkActions(selectedEmployees.length > 0);
+  }, [selectedEmployees]);
 
   return (
     <div className="space-y-6">
@@ -282,43 +371,161 @@ const EmployeesPage = ({ employees, setEmployees }: { employees: Employee[]; set
           <UserPlus className="w-4 h-4 text-primary" />
           Add Employee Email
         </h3>
-        <div className="flex gap-3">
-          <div className="relative flex-1">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-            <input
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addEmployee()}
-              placeholder="employee@company.dz"
-              className="w-full h-10 pl-9 pr-3 rounded-lg bg-muted/30 border border-primary/10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-            />
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+              <input
+                value={newEmail}
+                onChange={(e) => {
+                  setNewEmail(e.target.value);
+                  setEmailError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && addEmployee()}
+                placeholder="employee@company.dz"
+                className={`w-full h-10 pl-9 pr-3 rounded-lg bg-muted/30 border text-sm focus:outline-none focus:ring-2 transition-all ${
+                  emailError 
+                    ? "border-danger/50 focus:ring-danger/50 focus:border-danger/50" 
+                    : "border-primary/10 focus:ring-primary/50 focus:border-primary/50"
+                }`}
+              />
+            </div>
+            <button onClick={addEmployee} className="px-5 py-2.5 bg-gradient-brand text-white rounded-lg font-semibold text-sm whitespace-nowrap hover:opacity-90 transition-all">
+              <UserPlus className="w-4 h-4 inline mr-1.5" />
+              Add
+            </button>
           </div>
-          <button onClick={addEmployee} className="px-5 py-2.5 bg-gradient-brand text-white rounded-lg font-semibold text-sm whitespace-nowrap hover:opacity-90 transition-all">
-            <UserPlus className="w-4 h-4 inline mr-1.5" />
-            Add
-          </button>
+          {emailError && (
+            <p className="text-xs text-danger flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />
+              {emailError}
+            </p>
+          )}
         </div>
       </motion.div>
 
       {/* Employee list */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-6 space-y-3">
-        <div className="flex items-center justify-between">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-6 space-y-4">
+        {/* Header with search and stats */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
-            Employees ({employees.length})
+            Employees ({filteredEmployees.length} of {employees.length})
           </h3>
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search employees..."
+              className="w-full h-9 pl-9 pr-3 rounded-lg bg-muted/30 border border-primary/10 text-xs focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+            />
+          </div>
         </div>
+
+        {/* Bulk actions */}
+        <AnimatePresence>
+          {showBulkActions && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="space-y-3"
+            >
+              <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <p className="text-sm text-primary">
+                  {selectedEmployees.length} employee{selectedEmployees.length !== 1 ? 's' : ''} selected
+                </p>
+                <button
+                  onClick={() => setSelectedEmployees([])}
+                  className="px-3 py-1.5 rounded-lg bg-muted/50 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors"
+                >
+                  Clear Selection
+                </button>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border/50">
+                <span className="text-xs text-muted-foreground font-medium">Bulk Actions:</span>
+                
+                {/* Status updates */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => bulkUpdateStatus("active")}
+                    className="px-2 py-1 rounded bg-success/10 text-success text-xs font-medium hover:bg-success/20 transition-colors"
+                  >
+                    Set Active
+                  </button>
+                  <button
+                    onClick={() => bulkUpdateStatus("flagged")}
+                    className="px-2 py-1 rounded bg-warning/10 text-warning text-xs font-medium hover:bg-warning/20 transition-colors"
+                  >
+                    Set Flagged
+                  </button>
+                  <button
+                    onClick={() => bulkUpdateStatus("inactive")}
+                    className="px-2 py-1 rounded bg-muted/70 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors"
+                  >
+                    Set Inactive
+                  </button>
+                </div>
+                
+                <div className="w-px h-4 bg-border" />
+                
+                {/* Other actions */}
+                <button
+                  onClick={exportEmployees}
+                  className="px-2 py-1 rounded bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
+                >
+                  <Download className="w-3 h-3 inline mr-1" />
+                  Export CSV
+                </button>
+                
+                <button
+                  onClick={bulkRemoveEmployees}
+                  className="px-2 py-1 rounded bg-danger/10 text-danger text-xs font-medium hover:bg-danger/20 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3 inline mr-1" />
+                  Remove
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Employee list with selection */}
         <div className="space-y-2">
+          {filteredEmployees.length > 0 && (
+            <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground border-b border-border/30">
+              <input
+                type="checkbox"
+                checked={selectedEmployees.length === filteredEmployees.length && filteredEmployees.length > 0}
+                onChange={selectAllEmployees}
+                className="w-3 h-3 rounded border-border bg-muted/50 text-primary focus:ring-primary/40 accent-primary"
+              />
+              <span>Select All</span>
+            </div>
+          )}
+          
           <AnimatePresence>
-            {employees.map((emp) => (
+            {filteredEmployees.map((emp) => (
               <motion.div
                 key={emp.id}
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/50"
+                className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                  selectedEmployees.includes(emp.id) 
+                    ? "bg-primary/5 border-primary/30" 
+                    : "bg-muted/20 border-border/50 hover:bg-muted/30"
+                }`}
               >
                 <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedEmployees.includes(emp.id)}
+                    onChange={() => toggleEmployeeSelection(emp.id)}
+                    className="w-3 h-3 rounded border-border bg-muted/50 text-primary focus:ring-primary/40 accent-primary"
+                  />
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${
                     emp.status === "flagged" ? "bg-warning/10 text-warning" : emp.status === "active" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
                   }`}>
@@ -330,22 +537,43 @@ const EmployeesPage = ({ employees, setEmployees }: { employees: Employee[]; set
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    emp.status === "flagged" ? "badge-suspicious" : emp.status === "active" ? "badge-safe" : "bg-muted text-muted-foreground"
-                  }`}>
-                    {emp.status}
-                  </span>
-                  <button onClick={() => removeEmployee(emp.id)} className="p-1.5 rounded-lg hover:bg-danger/10 text-muted-foreground hover:text-danger transition-colors" aria-label={`Remove ${emp.email}`}>
+                  {/* Status dropdown */}
+                  <select
+                    value={emp.status}
+                    onChange={(e) => updateEmployeeStatus(emp.id, e.target.value as Employee['status'])}
+                    className="text-[10px] font-bold px-2 py-1 rounded-full border-0 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="active" className="bg-background">Active</option>
+                    <option value="flagged" className="bg-background">Flagged</option>
+                    <option value="inactive" className="bg-background">Inactive</option>
+                  </select>
+                  
+                  {/* Remove button */}
+                  <button 
+                    onClick={() => removeEmployee(emp.id)} 
+                    className="p-1.5 rounded-lg hover:bg-danger/10 text-muted-foreground hover:text-danger transition-colors" 
+                    aria-label={`Remove ${emp.email}`}
+                  >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </motion.div>
             ))}
           </AnimatePresence>
-          {employees.length === 0 && (
+          
+          {filteredEmployees.length === 0 && (
             <div className="text-center py-8">
-              <Users className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No employees added yet</p>
+              {searchQuery ? (
+                <>
+                  <Search className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No employees found matching "{searchQuery}"</p>
+                </>
+              ) : (
+                <>
+                  <Users className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No employees added yet</p>
+                </>
+              )}
             </div>
           )}
         </div>

@@ -18,8 +18,8 @@ const LandingNav = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-2xl" role="navigation" aria-label="Main navigation">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src={logo} alt="Phishing Detect & Protect" className="w-12 h-12 object-contain" />
-          <span className="text-lg font-bold tracking-tight">Phishing <span className="text-gradient">D&P</span></span>
+          <img src={logo} alt="Obsidian Guard" className="w-16 h-16 object-contain" />
+          <span className="text-lg font-bold tracking-tight">Obsidian <span className="text-gradient">Guard</span></span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
@@ -497,7 +497,7 @@ const CTASection = () => (
         <div className="relative p-12 md:p-20 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to fortify your business?</h2>
           <p className="text-muted-foreground max-w-md mx-auto mb-8">
-            Join thousands of companies using Phishing Detect & Protect to safeguard their most valuable digital assets.
+            Join thousands of companies using Obsidian Guard to safeguard their most valuable digital assets.
           </p>
           <Link
             to="/register"
@@ -517,15 +517,15 @@ const LandingFooter = () => (
   <footer className="border-t border-border py-10">
     <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
       <div className="flex items-center gap-2.5">
-        <img src={logo} alt="Phishing Detect & Protect" className="w-7 h-7 object-contain" />
-        <span className="font-bold text-sm">Phishing D&P</span>
+        <img src={logo} alt="Obsidian Guard" className="w-10 h-10 object-contain" />
+        <span className="font-bold text-sm">Obsidian Guard</span>
       </div>
       <div className="flex gap-6 text-xs text-muted-foreground">
         <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
         <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
         <Link to="/privacy" className="hover:text-foreground transition-colors">Security</Link>
       </div>
-      <p className="text-xs text-muted-foreground">© 2026 Phishing Detect & Protect. All rights reserved.</p>
+      <p className="text-xs text-muted-foreground">© 2026 Obsidian Guard. All rights reserved.</p>
     </div>
   </footer>
 );

@@ -14,7 +14,7 @@ const ProfileSettings = () => {
   const [profile, setProfile] = useState({
     email: "admin@phishingdp.com",
     phone: "+213 555 0123",
-    company: "Phishing D&P",
+    company: "Obsidian Guard",
     role: "Security Analyst",
     location: "Algiers, Algeria",
   });
